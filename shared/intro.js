@@ -707,7 +707,7 @@ function startScene(O     ) {
         px += (tx - px) * Math.min(1, dt * 3.5)
         py += (ty - py) * Math.min(1, dt * 3.5)
         const eye = [pT[0] + (Math.sin(t * 0.13) * 0.9 + px * 1.3) * drift, pT[1] + (Math.sin(t * 0.17) * 0.4 - py * 0.7) * drift, pT[2]]
-        if (O.camera) { const c = O.camera(q, t); if (c) { eye[0] = c.eye[0]; eye[1] = c.eye[1]; eye[2] = c.eye[2]; lT[0] = c.look[0]; lT[1] = c.look[1]; lT[2] = c.look[2] } }
+        if (O.camera) { const c = O.camera(q, t, eye, lT); if (c) { eye[0] = c.eye[0]; eye[1] = c.eye[1]; eye[2] = c.eye[2]; lT[0] = c.look[0]; lT[1] = c.look[1]; lT[2] = c.look[2] } }
         const vp = mul(proj, lookAt(eye, lT))
         const bay = smooth(0.84, 0.94, p), gnd = smooth(0.58, 0.66, p)
         const zen = mix(mix(skyZ, gndC, gnd), bayZ, bay), hor = mix(mix(skyH, gndC, gnd), bayH, bay)
@@ -1141,6 +1141,7 @@ function startScene(O     ) {
         const dt = Math.min(0.05, (now - last) / 1000)
         last = now
         if (!visible) return
+        if (O.pause && O.pause(T)) return
         T += dt
         cur = QA ? prog2() : cur + (prog2() - cur) * (1 - Math.exp(-dt * (O.ease || 6)))
         render(cur, T, dt, QA || O.intro === false ? 1e5 : (O.rv0 !== undefined ? O.rv0 : -130) + Math.min(T, 3.2) * 200)
@@ -1321,6 +1322,20 @@ Object.assign(global.BD, { descent: startScene, stage: stage, models: MODELS, th
 })(window);
 
 
+/* Where Mr. Trash Wheel sits on the first screen, for a W x H viewport. The photo opener places its cutout from this and the intro solves its camera from it, so
+   the real wheel and the wireframe wheel land on the same pixels. Units are the 760 x 520 photo crop: the eyes are 215 apart, the wheel is 613.5 wide. */
+window.BD = window.BD || {};
+BD.wheelFit = (W, H) => {
+  const m = Math.min(40, Math.max(16, 0.028 * W)), stack = W <= 820 && W / H < 1; let s, mid;
+  if (stack) { s = Math.max(0.2, Math.min((W - 2 * Math.max(16, 0.04 * W)) / 613.5, 0.36 * H / 370, (0.545 * H - 158) / 285)); mid = [W / 2 + 147 * s, 0.455 * H]; }
+  else {
+    const ledeR = m + Math.min(480, W - 2 * m), R = W - Math.max(24, m);
+    s = Math.max(0.2, Math.min(0.228 * H / 215, 0.166 * W / 215, (R - ledeR - 24) / 613.5));
+    mid = [Math.min(Math.max(0.77 * W, ledeR + 24 + 453.5 * s), R - 159.5 * s), 0.40 * H];
+  }
+  return { stack, s, sep: 215 * s, mid };
+};
+
 /* Baltimore Dynamics intro: the Noir animation with the story reversed. Mr. Trash Wheel first, the drones last. Mounts itself into <section id="top" class="bdi">. */
 (function () {
 "use strict";
@@ -1471,9 +1486,31 @@ const ANCHOR = [190, -2.95, 10], ORIGIN = [189, 113];
 const onMap = (mx, my, S) => [ANCHOR[0] + (mx - ORIGIN[0]) * S, ANCHOR[1], ANCHOR[2] + (my - ORIGIN[1]) * S];
 const WHEEL = { x: 204, z: -2, ry: Math.PI }, YACHT = { x: 170, z: 33, ry: 0 }, ZOD = { x: 158, z: 31 };
 
+/* An opener can sit over the intro for the first stretch of scroll (--op-lead). The photo opener also needs the camera to start where the photo was taken from. */
+const OPENER = (/[?&]open=(o\d\d)\b/.exec(location.search) || [])[1] || document.documentElement.dataset.opener;
+const MATCH = OPENER === "o11" && !reduced, FOVV = small ? 62 : 46, EYE1 = [203.5, 0.88, -3.63], EYE2 = [203.14, 0.96, -0.37], EYEM = [203.32, 0.92, -2], BLEND = 0.1;
+const mix3 = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+function solveFit(W, Ht, fov, mid, sep) {
+  const { cross, dot, norm } = BD.math, t = 1 / Math.tan(fov * Math.PI / 360), TH = Math.PI / 6, PHI = -Math.PI / 180, U = [-Math.cos(TH) * Math.cos(PHI), Math.sin(PHI), -Math.sin(TH) * Math.cos(PHI)];
+  const proj = (e, l) => { const z = norm([e[0] - l[0], e[1] - l[1], e[2] - l[2]]), x = norm(cross([0, 1, 0], z)), y = cross(z, x); return (p) => { const d = [p[0] - e[0], p[1] - e[1], p[2] - e[2]], cz = -dot(z, d); return [W / 2 + dot(x, d) / cz * t * Ht / 2, Ht / 2 - dot(y, d) / cz * t * Ht / 2]; }; };
+  let D = 3.005 * t * Ht / (2 * sep), eye, dir;
+  for (let it = 0; it < 6; it++) {
+    eye = mix3(EYEM, [EYEM[0] + U[0], EYEM[1] + U[1], EYEM[2] + U[2]], D);
+    const b = [EYEM[0] - eye[0], EYEM[1] - eye[1], EYEM[2] - eye[2]]; let ps = Math.atan2(b[2], b[0]), ch = Math.asin(b[1] / Math.hypot(b[0], b[1], b[2]));
+    const at = (p, c) => { dir = [Math.cos(c) * Math.cos(p), Math.sin(c), Math.cos(c) * Math.sin(p)]; return proj(eye, [eye[0] + dir[0], eye[1] + dir[1], eye[2] + dir[2]])(EYEM); };
+    for (let k = 0; k < 6; k++) { const s = at(ps, ch), e = 1e-4, a = at(ps + e, ch), c = at(ps, ch + e), j = [(a[0] - s[0]) / e, (c[0] - s[0]) / e, (a[1] - s[1]) / e, (c[1] - s[1]) / e], rx = mid[0] - s[0], ry = mid[1] - s[1], det = j[0] * j[3] - j[1] * j[2]; ps += (rx * j[3] - ry * j[1]) / det; ch += (ry * j[0] - rx * j[2]) / det; }
+    at(ps, ch); const P = proj(eye, [eye[0] + dir[0], eye[1] + dir[1], eye[2] + dir[2]]), a = P(EYE1), c = P(EYE2); D *= Math.hypot(c[0] - a[0], c[1] - a[1]) / sep;
+  }
+  return { eye, look: [eye[0] + dir[0] * D, eye[1] + dir[1] * D, eye[2] + dir[2] * D] };
+}
+const fitCam = (() => { let key = "", c = null; return () => { const w = canvas.clientWidth, h = canvas.clientHeight, k = w + "x" + h; if (k !== key) { key = k; const L = BD.wheelFit(w, h); c = solveFit(w, h, FOVV, L.mid, L.sep); } return c; }; })();
+let lead = 0;
+function watchLead() { const pr = document.createElement("div"); pr.style.cssText = "position:absolute;left:0;top:0;width:0;height:var(--op-lead,0px);visibility:hidden;pointer-events:none"; root.append(pr); const ms = () => { lead = pr.offsetHeight; }; ms(); new ResizeObserver(ms).observe(pr); }
+
 let started_ = false;
 function go() {
   if (started_) return; started_ = true;
+  if (OPENER) watchLead();
   const opts = {
     canvas, root: track, theme: { col: { gold: col.gold, ember: col.ember, water: col.water, marble: col.line, grid: col.line, pipe: col.line } }, callouts: cos.map((c) => c.el),
     keys: KEYS2, phase, mapK, hideK, uOf, rv0: 140, ease: 3.6, maxDpr: small ? 1.5 : 1.6, pack: BD.linePack, packScale: { swarm: 2.3, overhead: 2.4, rover: 1.5, zodiac: 1.6 },
@@ -1484,9 +1521,16 @@ function go() {
       [onMap(205, 400, 0.215), 0.435, 0.525, "Illustration"],
     ],
     onFail() { document.documentElement.classList.add("bdi-static"); canvas.style.background = `linear-gradient(rgba(5,6,10,.62),rgba(5,6,10,.62)),#05060a url(${new URL("still/wheel-near-mono.jpg", SRC).href}) center/cover`; },
-    onFrame(i) { cur = i.p; apply(i.p, i); },
-    frozen: reduced, reducedProgress: 0.02,
-    camera: (function () { const m = /[?&]cam=([-\d.,]+)/.exec(location.search); if (!m) return null; const v = m[1].split(',').map(Number); return () => ({ eye: v.slice(0, 3), look: v.slice(3, 6) }); })(),
+    onFrame(i) { cur = i.p; apply(i.p, i); if (QA && MATCH) { const a = i.project(EYE1), b = i.project(EYE2); window.BD_EYES = { w: canvas.clientWidth, h: canvas.clientHeight, p: i.p, e: [[a.x, a.y], [b.x, b.y]] }; } },
+    frozen: reduced, reducedProgress: 0.02, fov: MATCH ? FOVV : undefined,
+    progress: OPENER ? () => { const r = track.getBoundingClientRect(), span = r.height - lead - innerHeight; return span > 0 ? clamp((-r.top - lead) / span, 0, 1) : 0; } : undefined,
+    pause: OPENER ? (T) => T > 3.6 && window.BD_COVER === true : undefined,
+    camera: (function () {
+      const m = /[?&]cam=([-\d.,]+)/.exec(location.search);
+      if (m) { const v = m[1].split(',').map(Number); return () => ({ eye: v.slice(0, 3), look: v.slice(3, 6) }); }
+      if (!MATCH) return null;
+      return (q, t, e, l) => { if (q >= BLEND) return null; const c = fitCam(), k = smooth(0, BLEND, q); return { eye: mix3(c.eye, e, k), look: mix3(c.look, l, k) }; };
+    })(),
   };
   BD.descent(opts);
 }

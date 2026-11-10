@@ -588,8 +588,7 @@ if (OPEN) {
     progress: (el) => { const r = el.getBoundingClientRect(); return clamp01(-r.top / Math.max(1, r.height - innerHeight)); },
     map: () => mapSVG(),
   };
-  root.classList.add('has-op');
-  const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = `openers/${OPEN}.css`; document.head.append(css);
+  root.classList.add('has-op'); /* its stylesheet is already in the head, written there before first paint */
   const js = document.createElement('script'); js.src = `openers/${OPEN}.js`; document.head.append(js);
 }
 /* The backers also open the intro, on its first screen, and fade with it. */

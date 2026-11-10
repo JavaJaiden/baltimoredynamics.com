@@ -465,9 +465,10 @@ html.rm .rd.dz .pin{min-height:120svh}html.rm .dzst li{opacity:1!important;trans
 .pk-more{display:grid!important;place-items:center;align-content:center;gap:4px;background:#1a1a1a;font-weight:600;font-size:14px;text-decoration:none}
 .pk-contact .cv{overflow-y:auto}.pk-contact .legal{height:auto;font-size:12px;gap:.7em}.pk-contact .legal .bk{margin-bottom:8px}
 @media (max-width:860px){
-  .bdi .bdi-descent{height:430vh}
+  .bdi .bdi-descent{height:calc(430vh + var(--op-lead,0px))}
   .homev.pk{min-height:0}
 }
+@media (max-width:359px){.hd{gap:10px}.brand{font-size:15px}.brand svg{width:18px;height:18px}.lnk{font-size:13px}}
 @media (max-width:860px) and (max-height:700px){
   .pk-list span{display:none}.pk-list button{min-height:32px}.pk-list b{font-size:16px}
   .card h2{font-size:clamp(30px,9vw,38px)}.card .ln2{font-size:16px}.card .kick{min-height:20px}
