@@ -260,6 +260,12 @@ html.qa .rd .vin,html.qa .rd .txt>*{opacity:1!important;transform:none!important
 .end{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:28px var(--gut) 44px;border-top:1px solid var(--rule);font-size:15px;color:var(--dim)}
 .totop{display:inline-flex;align-items:center;gap:.5em;min-height:44px;font-weight:600;color:var(--fg);text-decoration:none}.totop:hover{color:var(--r)}
 
+/* The backers on the intro's first screen */
+.bdi .bdi-bk{margin:0 0 clamp(14px,2.2vh,22px);font:500 15px/1.2 var(--sans)}
+.bdi .bdi-bk>span{color:#c9c6bd;font-family:"Inter Tight",Helvetica,Arial,sans-serif}
+.bdi .bdi-bk a{color:inherit;text-decoration:none}
+.bdi .bdi-bk .bk-ng img{height:clamp(24px,2vw,30px)}.bdi .bdi-bk .bk-mtw img{height:clamp(40px,3.3vw,52px)}
+@media (max-width:860px){.bdi .bdi-bk{margin-bottom:12px}.bdi .bdi-bk>span{flex-basis:100%;margin:0 0 2px}}
 /* Contact carries the backers too */
 .txt .bk{margin-top:6px}
 
@@ -380,5 +386,81 @@ html.rm .rd.dz .pin{min-height:120svh}html.rm .dzst li{opacity:1!important;trans
   .dzst li{font-size:19px;line-height:1.3}
   .o2{top:auto;bottom:calc(22px + 35svh);left:calc(var(--gut) + var(--rail));right:var(--gut);width:auto;display:grid;grid-template-columns:auto 1fr;align-items:center;text-align:left;gap:0 14px}
   .o2rail{display:none}.o2r{font-size:36px;margin:0;grid-row:1/3;grid-column:1}.o2h{grid-column:2;grid-row:1/3}
+}
+/* The phone deck */
+.pk{position:relative;display:flex;flex-direction:column;height:calc(100svh - var(--hd));min-height:500px}
+.pk-strip{position:relative;flex:none;height:44px;margin:0 calc(var(--gut) + 14px) 0 calc(var(--gut) + 6px)}
+.pk-o{position:absolute;left:0;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;box-shadow:inset 0 0 0 3px var(--w);z-index:1}
+.pk-seg{position:absolute;top:50%;height:6px;margin-top:-3px;background:var(--c)}
+.pk-seg.sg-r{background:none;box-shadow:inset 0 0 0 2px var(--r)}
+.pk-seg.sg-n,.pk-seg.sg-h{background:repeating-linear-gradient(90deg,var(--c) 0 7px,transparent 7px 10px)}
+.pk-seg.sg-t{height:8px;margin-top:-4px;background:linear-gradient(180deg,var(--w) 0 25%,var(--r) 25% 50%,var(--n) 50% 75%,var(--h) 75%)}
+.pk-dot{position:absolute;top:0;width:26px;height:44px;margin-left:-13px;display:grid;place-items:center;z-index:2}
+.pk-dot i{width:9px;height:9px;border-radius:50%;background:var(--fg);box-shadow:0 0 0 2px var(--bg);transition:transform .2s}
+.pk-dot[aria-current] i{transform:scale(1.7);background:#fff;box-shadow:0 0 0 1.5px var(--bg),0 0 0 3px var(--c)}
+.pk-train{position:absolute;left:0;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px var(--bg),0 0 10px rgba(255,255,255,.5);z-index:3;pointer-events:none;will-change:transform}
+.deck{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;outline:none}
+.deck::-webkit-scrollbar{display:none}
+.card{position:relative;flex:0 0 100%;width:100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:8px var(--gut) 10px;overflow:hidden}
+.card .kick{font-size:13px;min-height:24px}.card .bu{font-size:12px}
+.card h2{font:600 clamp(34px,10.4vw,48px)/.95 var(--sans);letter-spacing:-.035em;text-wrap:balance}
+.card .ln2{font-size:clamp(17px,4.8vw,21px);max-width:none}
+.card .go{font-size:15px;min-height:40px;margin-top:0}
+.card .sub{font-size:16px;color:var(--dim)}
+.cv{position:relative;flex:1;min-height:0;width:100%;margin-top:4px}
+.cv .pano,.cv .pic,.cv .stg{height:100%}
+.pk-boat .cv .pic img{animation:float 7s ease-in-out infinite}
+.pk-nav{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;height:58px;padding:0 var(--gut);border-top:1px solid var(--rule)}
+.pk-nav button{display:inline-flex;align-items:center;gap:8px;min-height:46px;min-width:46px;font:600 15px/1.1 var(--sans);color:var(--fg)}
+.pk-prev{color:var(--dim)!important;max-width:42%}.pk-prev b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pk-prev:disabled{visibility:hidden}
+.pk-next{margin-left:auto;padding:0 14px;border-radius:24px;background:var(--fg);color:#000!important;max-width:64%}.pk-next b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Card 0: the map as a list */
+.c0{gap:12px;overflow-y:auto}
+.c0 #peek{font:600 clamp(30px,8.6vw,40px)/1.02 var(--sans);letter-spacing:-.028em;text-wrap:balance;margin-top:4px}
+.c0 .bk>span{flex-basis:100%;margin:0}
+.pk-list{width:100%;margin-top:2px}
+.pk-list li{position:relative}
+.pk-list li::before{content:"";position:absolute;left:19px;top:0;bottom:0;width:6px;margin-left:-3px;background:var(--c)}
+.pk-list li.l-t::before{background:linear-gradient(90deg,var(--w) 0 25%,var(--r) 25% 50%,var(--n) 50% 75%,var(--h) 75%)}
+.pk-list li:first-child::before{top:50%}.pk-list li:last-child::before{bottom:50%}
+.pk-list button{position:relative;display:grid;grid-template-columns:38px auto minmax(0,1fr);align-items:center;gap:10px;width:100%;min-height:clamp(36px,4.6svh,44px);text-align:left}
+.pk-list i{display:grid;place-items:center;width:38px;height:24px;border-radius:12px;background:var(--fg);color:#000;font:700 12.5px/1 var(--sans);font-style:normal}
+.pk-list b{font-weight:600;font-size:18px;letter-spacing:-.015em;white-space:nowrap}
+.pk-list span{font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pk-hint{display:flex;gap:8px;align-items:center;font-weight:600;font-size:15px;color:var(--r)}.pk-hint span{animation:nudge 1.6s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateX(6px)}}
+.pk-note{font-size:13px;color:var(--dim)}
+/* Dead zone card */
+.card.dz .cv{display:flex;flex-direction:column}
+.card.dz .dzc{position:relative;inset:auto;left:auto;display:block;flex:0 0 63%;width:100%;height:63%;-webkit-mask-image:none;mask-image:none;border-radius:2px}
+.card.dz .dzsh{display:none}
+.card.dz .o2{position:absolute;top:10px;right:12px;left:auto;bottom:auto;width:auto;display:block;text-align:right}
+.card.dz .o2r{font-size:30px;margin:0}.card.dz .o2h{font-size:11.5px;margin-top:4px}.card.dz .o2rail{display:none}
+.card.dz .dzst{position:relative;left:auto;right:auto;bottom:auto;flex:1;width:auto;height:auto;margin-top:12px}
+.card.dz .dzst li{top:0;bottom:auto;font-size:clamp(15px,4.3vw,18px);line-height:1.32}
+/* Exploded drawing cards */
+.card.ex .fig{font-size:11.5px;gap:4px 10px}
+/* Harbormaster: the live board, scaled to fit the card */
+.fit{position:absolute;inset:0;overflow:hidden}
+.fit .wid{width:100%;min-height:0;transform-origin:top center;display:block}
+/* Status, crew, origin, log, contact */
+.pk-status .big.four{height:auto;margin-top:8px;grid-template-columns:1fr 1fr;gap:20px 14px}.pk-status .big dt{font-size:clamp(34px,10vw,46px)}.pk-status .big dd{font-size:14px}
+.pk-crew .crw{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 10px}.pk-crew .crw img{margin-bottom:4px}.pk-crew .crw b{font-size:13px;line-height:1.15}.pk-crew .crw span{font-size:11.5px}
+.pk-origin .otl{grid-template-columns:minmax(0,1fr);gap:0}
+.pk-origin .otl::before{left:11px;right:auto;top:0;bottom:0;width:5px;height:auto}
+.pk-origin .otl li{grid-template-columns:27px minmax(0,1fr);column-gap:10px;row-gap:0;padding-bottom:clamp(4px,1.2svh,12px)}
+.pk-origin .otl i{grid-row:1/3;margin:0;width:27px;height:27px;box-shadow:inset 0 0 0 5px var(--fg)}
+.pk-origin .otl time{font-size:12px}.pk-origin .otl b{font-size:15px}
+.pk-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.pk-photos a{display:block;aspect-ratio:1;overflow:hidden}.pk-photos img{width:100%;height:100%;object-fit:cover;filter:grayscale(1)}
+.pk-more{display:grid!important;place-items:center;align-content:center;gap:4px;background:#1a1a1a;font-weight:600;font-size:14px;text-decoration:none}
+.pk-contact .cv{overflow-y:auto}.pk-contact .legal{height:auto;font-size:12px;gap:.7em}.pk-contact .legal .bk{margin-bottom:8px}
+@media (max-width:860px){
+  .bdi .bdi-descent{height:430vh}
+  .homev.pk{min-height:0}
+}
+@media (max-width:860px) and (max-height:700px){
+  .pk-list span{display:none}.pk-list button{min-height:32px}.pk-list b{font-size:16px}
+  .card h2{font-size:clamp(30px,9vw,38px)}.card .ln2{font-size:16px}.card .kick{min-height:20px}
 }
 @media (prefers-reduced-motion:reduce){.in,.trk b,.pic img{animation:none!important}.vis{transform:none!important}.vin,.txt>*{transition:none!important}}

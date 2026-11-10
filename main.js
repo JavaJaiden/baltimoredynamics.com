@@ -53,9 +53,9 @@ const STOPS = [
     { t: 'Overview', left: sub('Our first machines were built to find those places before they spread.') + `<p class="fine">${ch[2].note}</p>`, right: BAYPIC, after: paintBay },
     { t: 'What a dead zone is', left: sub('Fertilizer and stormwater runoff feed algae blooms. When the algae die, bacteria use up the oxygen in the water and fish can\'t stay.'), right: `<dl class="big">${DZ.stats.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>` },
   ] },
-  machine('rover', 'r', ch[3], 'A tethered crawler for the pipes under the city.', still('pipe-mono', 'Rendering of FALLSWAY-R inside a brick pipe'), cut('rover-3q', 1127, 435, 'Rendering of FALLSWAY-R on its tether'), cut('rover-exploded', 1329, 561, 'Exploded rendering of FALLSWAY-R')),
-  machine('swarm', 'n', ch[4], 'A supervised swarm of small aircraft for exterior fires near homes.', cut('swarm-3q', 1749, 817, 'Rendering of a SWARM-N aircraft'), still('street-mono', 'Simulated scene of SWARM-N aircraft at a rowhouse fire'), cut('swarm-exploded', 1815, 1167, 'Exploded rendering of a SWARM-N aircraft')),
-  machine('overhead', 'h', ch[5], 'The pump and the water stay on the ground.', cut('overhead-3q', 813, 1233, 'Rendering of OVERHEAD-H holding a hose'), still('tank-fire-mono', 'Simulated scene of OVERHEAD-H at a tank fire'), cut('overhead-exploded', 817, 1401, 'Exploded rendering of OVERHEAD-H')),
+  machine('rover', 'r', ch[3], 'A tethered crawler for the pipes under the city.', cut('rover-3q', 1127, 435, 'Rendering of FALLSWAY-R on its tether'), cut('rover-side', 1463, 233, 'Side view rendering of FALLSWAY-R paying out its tether from the reel'), cut('rover-exploded', 1329, 561, 'Exploded rendering of FALLSWAY-R')),
+  machine('swarm', 'n', ch[4], 'A supervised swarm of small aircraft for exterior fires near homes.', cut('swarm-3q', 1749, 817, 'Rendering of a SWARM-N aircraft'), cut('swarm-top', 1755, 1589, 'Top view rendering of a SWARM-N aircraft'), cut('swarm-exploded', 1815, 1167, 'Exploded rendering of a SWARM-N aircraft')),
+  machine('overhead', 'h', ch[5], 'The pump and the water stay on the ground.', cut('overhead-3q', 813, 1233, 'Rendering of OVERHEAD-H holding a hose'), cut('overhead-side', 795, 1451, 'Side view rendering of OVERHEAD-H with its hose'), cut('overhead-exploded', 817, 1401, 'Exploded rendering of OVERHEAD-H')),
   { id: 'harbormaster', l: 't', all: 1, wide: 1, name: 'Harbormaster', place: 'Fleet software', line: HM.title, tabs: [
     { t: 'Board', left: sub('Lose contact with an aircraft and its refill station stays reserved until a person confirms it\'s down.'), right: '<div class="wid"></div>', after: widget('board') },
     { t: 'Fleet', left: sub(HM.fleet.body), right: '<div class="wid"></div>', after: widget('fleet') },
@@ -201,7 +201,7 @@ function machineStage(sec, id) {
   if (M.labels && M.labels.length) L = leaders(host, M, s);
   return { set(v) { Object.assign(tgt, v); }, gone() { try { s.destroy(); const gl = canvas.getContext('webgl'); const x = gl && gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); } catch (err) {} } };
 }
-function deadZone(sec) {
+function deadZone(sec, src) {
   const c = $('.dzc', sec), x = c.getContext('2d'), steps = $$('.dzst li', sec), read = $('.o2r', sec), fill = $('.o2rail i', sec), trk = $('.hold', sec);
   let W = 0, H = 0, D = 1, dots = [], fish = [], alg = [], flk = [], vis = false, sy = 0, wH = 0, raf = 0, T = 8, last = 0, P = 0;
   let seedN = 1; const R = () => { seedN = (seedN * 1664525 + 1013904223) % 4294967296; return seedN / 4294967296; };
@@ -222,7 +222,7 @@ function deadZone(sec) {
     if (runoff > .004) { x.strokeStyle = `rgba(255,194,14,${(runoff * .9).toFixed(3)})`; x.lineWidth = 1.2; x.setLineDash([9, 10]); x.lineDashOffset = -t * 42; for (let i = 0; i < 6; i++) { x.beginPath(); x.moveTo(W + 10, sy - 96 + i * 14); x.bezierCurveTo(W * .86, sy - 66 + i * 12, W * (.72 - i * .03), sy - 10, W * (.56 - i * .05), sy + 2); x.stroke(); } x.setLineDash([]); }
     x.strokeStyle = 'rgba(236,230,217,.72)'; x.lineWidth = 1.2; x.beginPath(); for (let i = 0; i <= W; i += 14) { const y = sy + Math.sin(i * .012 + t * .9) * 2.4; i ? x.lineTo(i, y) : x.moveTo(i, y); } x.stroke();
     if (boat > .003) {
-      const bx = W * (narrow() ? .62 : .56) + (1 - easeIO(boat)) * W * .5, by = sy + Math.sin(t * .9) * 2.2;
+      const bx = (W < 520 ? W * .36 : W * (narrow() ? .62 : .56)) + (1 - easeIO(boat)) * W * .5, by = sy + Math.sin(t * .9) * 2.2;
       x.strokeStyle = '#ffc20e'; x.fillStyle = '#031217'; x.lineWidth = 1.6;
       x.beginPath(); x.moveTo(bx - 42, by - 8); x.lineTo(bx + 50, by - 8); x.lineTo(bx + 38, by + 5); x.lineTo(bx - 42, by + 5); x.closePath(); x.fill(); x.stroke();
       x.beginPath(); x.rect(bx - 22, by - 22, 34, 14); x.fill(); x.stroke();
@@ -237,7 +237,7 @@ function deadZone(sec) {
   };
   const prog = () => { const r = trk.getBoundingClientRect(), hh = hd.offsetHeight; return clamp01(-(r.top - hh) / Math.max(1, r.height - (innerHeight - hh))); };
   const update = (t) => {
-    P = QA && /[?&]dz=/.test(location.search) ? +/[?&]dz=([\d.]+)/.exec(location.search)[1] : reduced ? .95 : prog();
+    P = src ? src() : QA && /[?&]dz=/.test(location.search) ? +/[?&]dz=([\d.]+)/.exec(location.search)[1] : reduced ? .95 : prog();
     steps.forEach((el, i) => { const w = [[-1, .3], [.3, .62], [.62, 2]][i], a = reduced ? 1 : smooth(w[0], w[0] + .05, P) * (1 - smooth(w[1] - .05, w[1], P)); el.style.opacity = a.toFixed(3); el.style.transform = `translate3d(0,${((1 - a) * 16).toFixed(1)}px,0)`; });
     const low = smooth(.36, .72, P), txt = low > .5 ? '<2 mg/L' : '~7 mg/L';
     if (read.textContent !== txt) { read.textContent = txt; read.classList.toggle('lo', low > .5); }
@@ -340,17 +340,101 @@ function makeRide(n) {
     },
     off() { live = false; removeEventListener('scroll', onScroll); ro.disconnect(); io.disconnect(); cancelAnimationFrame(raf); raf = 0; },
     jump(id) { const el = document.getElementById('rd-' + id); if (!el) return false; el.classList.add('seen'); scrollTo(0, el.getBoundingClientRect().top + scrollY - hd.offsetHeight); return true; },
+    inRide() { return ride.getBoundingClientRect().top < innerHeight * .5; },
+    destroy() { this.off(); Object.values(FX).forEach((f) => f && f.gone && f.gone()); },
+  };
+}
+
+/* ---------- the phone version: the line is a deck you swipe through, one station per card ---------- */
+const PK_VIS = (s, i) => {
+  const V = RIDE[s.id];
+  if (V.pin === 'dz') return `<canvas class="dzc" aria-hidden="true"></canvas><i class="dzsh" aria-hidden="true"></i><aside class="o2" aria-hidden="true"><p class="o2r">~7 mg/L</p><p class="o2h">Dissolved oxygen<br><em>Illustration</em></p><div class="o2rail"><i></i></div></aside><ol class="dzst">${DZSTEPS.map(li).join('')}</ol>`;
+  if (V.pin === 'ex') return FIG(i, s);
+  if (s.id === 'harbormaster') return '<div class="fit"><div class="wid"></div></div>';
+  if (s.id === 'log') return `<div class="pk-photos">${C.log.photos.map((p) => `<a href="#log">${photo(p.src, p.alt)}</a>`).join('')}<a class="pk-more" href="#log">All photos<span aria-hidden="true">→</span></a></div>`;
+  if (s.id === 'contact') return `<div class="legal">${BACKED}<p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>`;
+  return V.html;
+};
+const pkCard = (s, i) => {
+  const V = RIDE[s.id], line = V.line || s.line;
+  return `<section class="card l-${s.l} pk-${s.id}${V.pin ? ' ' + V.pin : ''}" data-i="${i + 1}" aria-labelledby="pk-h-${s.id}"${s.id === 'harbormaster' ? ' data-hm' : ''}>
+  <p class="kick">${bullets(s)}<span class="n">${num(i)}</span><span>${s.place}</span></p>
+  <h2 id="pk-h-${s.id}">${s.name}</h2>
+  ${line ? `<p class="ln2">${line.replace(/(\w+-\w+)/g, '<span class="nw">$1</span>')}</p>` : ''}${s.id === 'contact' ? sub(C.contact.body) : ''}
+  ${V.cta === false ? '' : `<a class="go" href="#${s.id}">${V.cta || `More on ${s.name}`}<span aria-hidden="true">→</span></a>`}
+  <div class="cv">${PK_VIS(s, i)}</div></section>`;
+};
+const PKSEG = (k) => k === 't' ? 'linear-gradient(180deg,var(--w) 0 25%,var(--r) 25% 50%,var(--n) 50% 75%,var(--h) 75%)' : '';
+const POCKET = () => `<div class="pk" id="pk">
+  <nav class="pk-strip" aria-label="Stations on the line"><i class="pk-o" aria-hidden="true"></i>${STOPS.map((s, i) => `<i class="pk-seg l-${s.l} sg-${s.l}" style="left:${(i / 12 * 100).toFixed(3)}%;width:${(100 / 12).toFixed(3)}%" aria-hidden="true"></i>`).join('')}${STOPS.map((s, i) => `<button type="button" class="pk-dot l-${s.l}" style="left:${((i + 1) / 12 * 100).toFixed(3)}%" data-go="${i + 1}" aria-label="${num(i)} ${s.name}"><i></i></button>`).join('')}<i class="pk-train" aria-hidden="true"></i></nav>
+  <div class="deck" id="deck" tabindex="-1">
+    <section class="card c0" data-i="0" aria-label="${C.brand.name}"><h1 class="vh">${C.brand.name}</h1><p id="peek">${LINE}</p>${BACKED}
+      <ol class="pk-list">${STOPS.map((s, i) => `<li class="l-${s.l}"><button type="button" data-go="${i + 1}"><i>${num(i)}</i><b>${s.name}</b><span>${s.place}</span></button></li>`).join('')}</ol>
+      <p class="pk-hint">Swipe to ride the line<span aria-hidden="true">→</span></p><p class="pk-note">${C.hero.note}</p></section>
+    ${STOPS.map(pkCard).join('')}
+  </div>
+  <nav class="pk-nav" aria-label="Along the line"><button type="button" class="pk-prev" aria-label="Previous stop"><span aria-hidden="true">←</span><b></b></button><button type="button" class="pk-next"><b></b><span aria-hidden="true">→</span></button></nav>
+</div>`;
+function makePocket(n) {
+  const deck = $('#deck', n), cards = $$('.card', deck), dots = $$('.pk-dot', n), train = $('.pk-train', n), strip = $('.pk-strip', n), prev = $('.pk-prev', n), next = $('.pk-next', n), N = cards.length;
+  const ST = {}, fx = {}; let cur = -1, raf = 0, live = false, t0 = 0, drive = 0, built = false;
+  const name = (i) => i <= 0 ? 'Map' : STOPS[i - 1].name;
+  const go = (i, now) => { i = Math.max(0, Math.min(N - 1, i)); deck.scrollTo({ left: i * deck.clientWidth, behavior: now || reduced ? 'auto' : 'smooth' }); if (now) setCur(i); };
+  /* Stations play on their own when you arrive: the Bay runs its dead zone, the machines come apart. */
+  const p14 = () => (cur === 3 ? clamp01((performance.now() - t0) / 15000) : 0);
+  function build() {
+    if (built) return; built = true;
+    const bay = cards[3]; deadZone(bay, () => (QA && /[?&]dz=/.test(location.search) ? +/[?&]dz=([\d.]+)/.exec(location.search)[1] : reduced ? .95 : p14()));
+    let k = 0; ['rover', 'swarm', 'overhead'].forEach((id) => setTimeout(() => { if (!ST[id]) ST[id] = machineStage(cards[STOPS.findIndex((s) => s.id === id) + 1], id); }, 120 + 260 * k++));
+  }
+  const fit = () => { const f = $('.pk-harbormaster .fit', n), w = f && $('.wid', f); if (!w || !w.firstElementChild) return; w.style.transform = ''; const s = Math.min(1, f.clientHeight / Math.max(1, w.scrollHeight), f.clientWidth / Math.max(1, w.scrollWidth)); w.style.transform = `scale(${s.toFixed(3)})`; };
+  function loop() {
+    drive = 0; if (!live) return;
+    const s = cur > 0 ? STOPS[cur - 1].id : '', st = ST[s];
+    if (st && st.set) {
+      const t = (performance.now() - t0) / 1000, c = t % 10.5, e = QA && /[?&]ex=/.test(location.search) ? +/[?&]ex=([\d.]+)/.exec(location.search)[1] : reduced ? .6 : c < 2.8 ? .9 * easeIO(c / 2.8) : c < 7.6 ? .9 : c < 9.4 ? lerp(.9, .12, easeIO((c - 7.6) / 1.8)) : .12;
+      st.set({ e, yaw: reduced ? 0 : Math.sin(t * .32) * .55, pitch: Math.sin(t * .21) * .06 });
+    }
+    if (st || cur === 3) drive = requestAnimationFrame(loop);
+  }
+  function setCur(i) {
+    if (i === cur) return; cur = i; t0 = performance.now();
+    dots.forEach((d, k) => { if (k + 1 === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+    cards.forEach((c, k) => c.setAttribute('aria-hidden', String(k !== i)));
+    $('b', prev).textContent = i > 0 ? name(i - 1) : ''; prev.disabled = i === 0;
+    $('b', next).textContent = i < N - 1 ? (i === 0 ? 'Ride the line' : 'Next: ' + name(i + 1)) : 'Back to the map';
+    const c = cards[i]; c.classList.add('seen');
+    if (!fx[i]) { fx[i] = 1; $$('dt[data-n]', c).forEach((d) => { const v = +d.dataset.n, s = performance.now(); if (!v || reduced || QA) return; const step = (t) => { const k = Math.min(1, (t - s) / 1200); d.textContent = Math.round(v * (1 - Math.pow(1 - k, 3))).toLocaleString('en-US'); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }); }
+    if (STOPS[i - 1] && STOPS[i - 1].id === 'harbormaster') requestAnimationFrame(fit);
+    if (!drive) drive = requestAnimationFrame(loop);
+  }
+  const onScroll = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; const W = deck.clientWidth || 1, x = deck.scrollLeft, f = x / Math.max(1, deck.scrollWidth - W); train.style.transform = `translate3d(${(f * strip.clientWidth).toFixed(1)}px,0,0)`; setCur(Math.round(x / W)); }); };
+  n.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { go(+b.dataset.go); return; } if (e.target.closest('.pk-prev')) go(cur - 1); else if (e.target.closest('.pk-next')) go(cur < N - 1 ? cur + 1 : 0); });
+  deck.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { e.preventDefault(); go(cur + 1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur - 1); } });
+  const ro = new ResizeObserver(() => { if (cur >= 0) deck.scrollLeft = cur * deck.clientWidth; onScroll(); fit(); });
+  return {
+    on() { if (live) return; live = true; RIDE.harbormaster.after(cards[STOPS.findIndex((s) => s.id === 'harbormaster') + 1]); deck.addEventListener('scroll', onScroll, { passive: true }); ro.observe(deck); if (cur < 0) setCur(0); else { const i = cur; cur = -1; setCur(i); } onScroll(); (window.requestIdleCallback || setTimeout)(build); },
+    off() { live = false; deck.removeEventListener('scroll', onScroll); ro.disconnect(); cancelAnimationFrame(raf); cancelAnimationFrame(drive); raf = drive = 0; },
+    inRide() { return cur > 0; },
+    jump(id) { const i = STOPS.findIndex((s) => s.id === id) + 1; if (i < 1) return false; scrollTo(0, 0); go(i, true); return true; },
+    destroy() { this.off(); Object.values(ST).forEach((s) => s && s.gone && s.gone()); },
   };
 }
 
 let HOME = null;
 function home() {
   hd.innerHTML = `<a class="brand" href="#map" aria-label="${C.brand.name}, the map">${C.brand.mark}<span>${C.brand.name}</span></a>${rail(-1).replace('class="rail"', 'class="rail off"')}<span class="sp"></span>${location.hash === '#anime' ? '<a class="lnk" href="#anime">Replay the film</a>' : '<a class="lnk" href="#intro">Replay the intro</a>'}`;
+  /* Phones get the deck, wider screens get the long ride. Crossing the breakpoint rebuilds it. */
+  const mode = narrow() ? 'pk' : 'ride';
+  if (HOME && HOME.mode !== mode) { HOME.r.destroy(); HOME = null; }
   if (!HOME) {
-    const n = document.createElement('div'); n.className = 'homev';
-    n.innerHTML = `<section class="home"><h1 class="vh">${C.brand.name} line map</h1>${mapSVG()}${LIST()}<div class="hl"><p id="peek">${LINE}</p>${BACKED}</div>
+    const n = document.createElement('div'); n.className = 'homev ' + mode;
+    if (mode === 'pk') { n.innerHTML = POCKET(); view.replaceChildren(n); HOME = { n, mode, r: makePocket(n) }; }
+    else {
+      n.innerHTML = `<section class="home"><h1 class="vh">${C.brand.name} line map</h1>${mapSVG()}${LIST()}<div class="hl"><p id="peek">${LINE}</p>${BACKED}</div>
   <div class="key"><p><span class="k k-w"></span>On the water<span class="k k-r"></span>Designed<span class="k k-n"></span>Simulated</p><p>${C.hero.note} <a href="#contact">Legal</a></p></div></section>${RIDEHTML()}`;
-    view.replaceChildren(n); HOME = { n, r: makeRide(n) };
+      view.replaceChildren(n); HOME = { n, mode, r: makeRide(n) };
+    }
   } else view.replaceChildren(HOME.n);
   const p = $('#peek'); if (p) p.textContent = LINE;
   HOME.r.on();
@@ -455,10 +539,10 @@ hd.addEventListener('click', (e) => { if (e.target.closest('[href="#anime"]') &&
 
 /* ---------- routing ---------- */
 let cur = -1, fromRide = false, rideOff = null;
-const goHome = () => { home(); rideOff = HOME.r.off; };
+const goHome = () => { home(); const r = HOME.r; rideOff = () => r.off(); };
 function route() {
   const h = location.hash.slice(1), i = STOPS.findIndex((s) => s.id === h);
-  if (rideOff) { const r = $('#ride'); if (i >= 0) fromRide = !!r && r.getBoundingClientRect().top < innerHeight * .5; rideOff(); rideOff = null; }
+  if (rideOff) { if (i >= 0) fromRide = HOME.r.inRide(); rideOff(); rideOff = null; }
   if (h === 'anime') { if (reduced || window.BD_FILM === false) { location.hash = 'map'; return; } const back = cur >= 0; root.classList.add('bdi-off'); cur = -1; film(true); goHome(); if (back) $('#app').scrollIntoView(); else scrollTo(0, 0); return; }
   film(false);
   if (i >= 0) { const dir = cur < 0 || i >= cur ? 1 : -1; root.classList.add('bdi-off'); stop(i, dir); cur = i; scrollTo(0, 0); return; }
@@ -481,7 +565,11 @@ document.addEventListener('click', (e) => {
   const a = e.target.closest && e.target.closest('a[href="#map"]');
   if (a && cur < 0 && location.hash === '#map') { e.preventDefault(); scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' }); }
 });
+/* The backers also open the intro, on its first screen, and fade with it. */
+const backIntro = () => { const l = $('#top .bdi-lede'); if (l && !$('.bk', l)) l.insertAdjacentHTML('afterbegin', BACKED.replace('class="bk"', 'class="bk bdi-bk"')); return !!l; };
+if (!backIntro() && $('#top')) { const mo = new MutationObserver(() => { if (backIntro()) mo.disconnect(); }); mo.observe($('#top'), { childList: true, subtree: true }); }
 addEventListener('hashchange', route);
+matchMedia('(max-width: 860px)').addEventListener('change', () => { if (HOME && cur < 0 && HOME.mode !== (narrow() ? 'pk' : 'ride')) { if (rideOff) { rideOff(); rideOff = null; } goHome(); } });
 addEventListener('keydown', (e) => {
   if (cur < 0 || e.metaKey || e.ctrlKey || e.altKey || (e.target.closest && e.target.closest('input,select,textarea,summary'))) return;
   if (e.key === 'ArrowRight') location.hash = (STOPS[cur + 1] || { id: 'map' }).id;
