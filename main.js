@@ -370,7 +370,7 @@ const POCKET = () => `<div class="pk" id="pk">
   <div class="deck" id="deck" tabindex="-1">
     <section class="card c0" data-i="0" aria-label="${C.brand.name}"><h1 class="vh">${C.brand.name}</h1><p id="peek">${LINE}</p>${BACKED}
       <ol class="pk-list">${STOPS.map((s, i) => `<li class="l-${s.l}"><button type="button" data-go="${i + 1}"><i>${num(i)}</i><b>${s.name}</b><span>${s.place}</span></button></li>`).join('')}</ol>
-      <p class="pk-hint">Swipe to ride the line<span aria-hidden="true">→</span></p><p class="pk-note">${C.hero.note}</p></section>
+      <p class="pk-hint">Swipe to ride the line<span aria-hidden="true">→</span></p></section>
     ${STOPS.map(pkCard).join('')}
   </div>
   <nav class="pk-nav" aria-label="Along the line"><button type="button" class="pk-prev" aria-label="Previous stop"><span aria-hidden="true">←</span><b></b></button><button type="button" class="pk-next"><b></b><span aria-hidden="true">→</span></button></nav>
@@ -432,7 +432,7 @@ function home() {
     if (mode === 'pk') { n.innerHTML = POCKET(); view.replaceChildren(n); HOME = { n, mode, r: makePocket(n) }; }
     else {
       n.innerHTML = `<section class="home"><h1 class="vh">${C.brand.name} line map</h1>${mapSVG()}${LIST()}<div class="hl"><p id="peek">${LINE}</p>${BACKED}</div>
-  <div class="key"><p><span class="k k-w"></span>On the water<span class="k k-r"></span>Designed<span class="k k-n"></span>Simulated</p><p>${C.hero.note} <a href="#contact">Legal</a></p></div></section>${RIDEHTML()}`;
+  <div class="key"><p><span class="k k-w"></span>On the water<span class="k k-r"></span>Designed<span class="k k-n"></span>Simulated</p><p><a href="#contact">Legal</a></p></div></section>${RIDEHTML()}`;
       view.replaceChildren(n); HOME = { n, mode, r: makeRide(n) };
     }
   } else view.replaceChildren(HOME.n);
@@ -565,6 +565,20 @@ document.addEventListener('click', (e) => {
   const a = e.target.closest && e.target.closest('a[href="#map"]');
   if (a && cur < 0 && location.hash === '#map') { e.preventDefault(); scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' }); }
 });
+/* Openers: an optional first screen with its own look that hands off into the intro. ?open=o01 ... o10 */
+const OPEN = (/[?&]open=(o\d\d)\b/.exec(location.search) || [])[1] || document.documentElement.dataset.opener;
+if (OPEN) {
+  window.BDO = {
+    C, STOPS, BACKED, mark: C.brand.mark, reduced, narrow, img: BD.img, cut: (n) => `shared/cut/${n}-linework.webp`,
+    LINES: { w: '#1e90e8', r: '#ffc20e', n: '#00a85a', h: '#ee2a2f' }, INK: '#05060a', FG: '#f4f2ec',
+    /* 0 when the opener's top is at the top of the screen, 1 when it has fully scrolled away */
+    progress: (el) => { const r = el.getBoundingClientRect(); return clamp01(-r.top / Math.max(1, r.height - innerHeight)); },
+    map: () => mapSVG(),
+  };
+  root.classList.add('has-op');
+  const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = `openers/${OPEN}.css`; document.head.append(css);
+  const js = document.createElement('script'); js.src = `openers/${OPEN}.js`; document.head.append(js);
+}
 /* The backers also open the intro, on its first screen, and fade with it. */
 const backIntro = () => { const l = $('#top .bdi-lede'); if (l && !$('.bk', l)) l.insertAdjacentHTML('afterbegin', BACKED.replace('class="bk"', 'class="bk bdi-bk"')); return !!l; };
 if (!backIntro() && $('#top')) { const mo = new MutationObserver(() => { if (backIntro()) mo.disconnect(); }); mo.observe($('#top'), { childList: true, subtree: true }); }

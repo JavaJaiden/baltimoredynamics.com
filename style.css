@@ -260,6 +260,11 @@ html.qa .rd .vin,html.qa .rd .txt>*{opacity:1!important;transform:none!important
 .end{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:28px var(--gut) 44px;border-top:1px solid var(--rule);font-size:15px;color:var(--dim)}
 .totop{display:inline-flex;align-items:center;gap:.5em;min-height:44px;font-weight:600;color:var(--fg);text-decoration:none}.totop:hover{color:var(--r)}
 
+/* Openers: a first screen before the intro. Each opener lives in openers/oNN.{js,css}. */
+.op{position:relative;height:var(--op-h,180vh);background:var(--op-bg,#05060a);color:var(--op-fg,#f4f2ec);isolation:isolate}
+.op-pin{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
+.op-veil{position:absolute;inset:0;background:#05060a;opacity:0;pointer-events:none;z-index:50}
+html.bdi-off .op{display:none}
 /* The backers on the intro's first screen */
 .bdi .bdi-bk{margin:0 0 clamp(14px,2.2vh,22px);font:500 15px/1.2 var(--sans)}
 .bdi .bdi-bk>span{color:#c9c6bd;font-family:"Inter Tight",Helvetica,Arial,sans-serif}
