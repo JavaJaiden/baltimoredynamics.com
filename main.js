@@ -77,6 +77,9 @@ const STOPS = [
 ];
 const num = (i) => String(i + 1).padStart(2, '0');
 const hd = $('#hd'), view = $('#view'), root = document.documentElement;
+/* Stop pages render here; the home page stays in the document beside it, hidden but with its layout kept. */
+const stopBox = document.createElement('div'); stopBox.className = 'stopv'; stopBox.hidden = true; view.append(stopBox);
+const showHome = (on) => { stopBox.hidden = on; if (on) stopBox.replaceChildren(); if (HOME) HOME.n.classList.toggle('away', !on); };
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const LINE = C.hero.line1 + ' ' + C.hero.line2;
 
@@ -263,9 +266,13 @@ function makeRide(n) {
   });
   const len = (p) => p.reduce((t, q, i) => i ? t + Math.hypot(q[0] - p[i - 1][0], q[1] - p[i - 1][1]) : 0, 0);
   const D = (p) => 'M' + p.map((q) => q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join('L');
-  function layout() {
+  let lkey = '';
+  function layout(force) {
     if (!live || !ride.isConnected) return;
-    const R = ride.getBoundingClientRect(), W = ride.clientWidth, H = ride.offsetHeight, ph = narrow(), vh = innerHeight;
+    const R = ride.getBoundingClientRect(), W = ride.clientWidth, H = ride.offsetHeight, ph = narrow(), vh = innerHeight, key = W + 'x' + vh + ':' + H;
+    /* Coming back to the same window size: the track is already right, just bring it up to date. */
+    if (force !== true && key === lkey && segs.length) { lastOn = -2; tick(); return; }
+    lkey = key;
     const lw = ph ? 10 : 14, tw = ph ? 3 : 4, c = ph ? 0 : 44, cue = $('.ride-cue i', ride).getBoundingClientRect();
     /* Stations inside a pinned screen are measured where they sit before the screen pins. */
     const P = secs.map((s) => { const b = $('.stn', s).getBoundingClientRect(), trk = $('.hold', s); const y = trk ? s.offsetTop + trk.offsetTop + (b.top - $('.pin', s).getBoundingClientRect().top) + b.height / 2 : b.top + b.height / 2 - R.top; return [Math.round(b.left + b.width / 2 - R.left), Math.round(y)]; });
@@ -316,7 +323,7 @@ function makeRide(n) {
       const y = t + top; if (y > vh * 2.2 || y + h < -vh * 1.2) return;
       const id = STOPS[k].id;
       if (pins[k]) {
-        if (!FX[id]) FX[id] = RIDE[id].pin === 'dz' ? (deadZone(secs[k]), 1) : machineStage(secs[k], id) || 1;
+        mk(k);
         const st = FX[id]; if (st === 1) return;
         const [pt0, ph0] = pins[k], P = QA && /[?&]ex=/.test(location.search) ? +/[?&]ex=([\d.]+)/.exec(location.search)[1] : clamp01(-(pt0 + top - hh) / Math.max(1, ph0 - (vh - hh)));
         const e = reduced ? .6 : smooth(.04, .5, P) * (1 - .55 * smooth(.88, 1, P));
@@ -324,19 +331,23 @@ function makeRide(n) {
       } else if (!reduced && y < vh * 1.5 && y + h > -vh * .5) secs[k].style.setProperty('--p', ((y + h / 2 - vh / 2) / vh).toFixed(3));
     });
   }
+  /* Held screens are built ahead of time, in idle moments, so nothing is built mid-scroll. */
+  function mk(k) { const id = STOPS[k].id; if (!FX[id]) FX[id] = RIDE[id].pin === 'dz' ? (deadZone(secs[k]), 1) : machineStage(secs[k], id) || 1; }
+  const idle = window.requestIdleCallback || ((f) => setTimeout(f, 200));
+  let pre = false; const prebuild = () => { if (pre) return; pre = true; const ks = STOPS.map((s, k) => (RIDE[s.id].pin ? k : -1)).filter((k) => k >= 0); const next = () => { const k = ks.shift(); if (k === undefined || !live) { pre = !!ks.length ? false : pre; return; } mk(k); idle(next, { timeout: 1200 }); }; idle(next, { timeout: 1200 }); };
   const onScroll = () => { if (!raf) raf = requestAnimationFrame(tick); };
-  let rt = 0; const onResize = () => { cancelAnimationFrame(rt); rt = requestAnimationFrame(layout); };
+  let rt = 0; const onResize = () => { cancelAnimationFrame(rt); rt = requestAnimationFrame(() => layout()); };
   const ro = new ResizeObserver(onResize);
   const count = (el) => $$('dt[data-n]', el).forEach((d) => { const n = +d.dataset.n, t0 = performance.now(); if (!n || reduced || QA) return; const step = (t) => { const k = Math.min(1, (t - t0) / 1300), e = 1 - Math.pow(1 - k, 3); d.textContent = Math.round(n * e).toLocaleString('en-US'); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); });
   const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('seen'); io.unobserve(e.target); count(e.target); } }), { rootMargin: '0px 0px -16% 0px' });
-  if (document.fonts) document.fonts.ready.then(() => live && layout());
+  if (document.fonts) document.fonts.ready.then(() => live && layout(true));
   return {
     on() {
       if (live) return; live = true; rails = $$('.hd .rs'); railBox = $('.hd .rail'); lastOn = -2;
       RIDE.harbormaster.after(byId('harbormaster'));
       addEventListener('scroll', onScroll, { passive: true }); ro.observe(ride);
       secs.forEach((s) => { if (!s.classList.contains('seen')) io.observe(s); });
-      layout();
+      layout(); setTimeout(prebuild, 900);
     },
     off() { live = false; removeEventListener('scroll', onScroll); ro.disconnect(); io.disconnect(); cancelAnimationFrame(raf); raf = 0; },
     jump(id) { const el = document.getElementById('rd-' + id); if (!el) return false; el.classList.add('seen'); scrollTo(0, el.getBoundingClientRect().top + scrollY - hd.offsetHeight); return true; },
@@ -426,16 +437,17 @@ function home() {
   hd.innerHTML = `<a class="brand" href="#map" aria-label="${C.brand.name}, the map">${C.brand.mark}<span>${C.brand.name}</span></a>${rail(-1).replace('class="rail"', 'class="rail off"')}<span class="sp"></span>${location.hash === '#anime' ? '<a class="lnk" href="#anime">Replay the film</a>' : '<a class="lnk" href="#intro">Replay the intro</a>'}`;
   /* Phones get the deck, wider screens get the long ride. Crossing the breakpoint rebuilds it. */
   const mode = narrow() ? 'pk' : 'ride';
-  if (HOME && HOME.mode !== mode) { HOME.r.destroy(); HOME = null; }
+  if (HOME && HOME.mode !== mode) { HOME.r.destroy(); HOME.n.remove(); HOME = null; }
   if (!HOME) {
     const n = document.createElement('div'); n.className = 'homev ' + mode;
-    if (mode === 'pk') { n.innerHTML = POCKET(); view.replaceChildren(n); HOME = { n, mode, r: makePocket(n) }; }
+    if (mode === 'pk') { n.innerHTML = POCKET(); view.prepend(n); HOME = { n, mode, r: makePocket(n) }; }
     else {
       n.innerHTML = `<section class="home"><h1 class="vh">${C.brand.name} line map</h1>${mapSVG()}${LIST()}<div class="hl"><p id="peek">${LINE}</p>${BACKED}</div>
   <div class="key"><p><span class="k k-w"></span>On the water<span class="k k-r"></span>Designed<span class="k k-n"></span>Simulated</p><p><a href="#contact">Legal</a></p></div></section>${RIDEHTML()}`;
-      view.replaceChildren(n); HOME = { n, mode, r: makeRide(n) };
+      view.prepend(n); HOME = { n, mode, r: makeRide(n) };
     }
-  } else view.replaceChildren(HOME.n);
+  }
+  showHome(true);
   const p = $('#peek'); if (p) p.textContent = LINE;
   HOME.r.on();
   document.title = C.brand.name;
@@ -478,7 +490,8 @@ function stop(i, dir) {
   const s = STOPS[i], p = STOPS[i - 1], n = STOPS[i + 1];
   hd.innerHTML = `<a class="brand" href="#map" aria-label="${C.brand.name}, back to the map">${C.brand.mark}<span>${C.brand.name}</span></a>${rail(i)}<span class="sp"></span><a class="lnk" href="#map">Map</a>`;
   const bullets = s.all ? ['w', 'r', 'n', 'h'] : s.l === 't' ? [] : [s.l];
-  view.innerHTML = `<article class="stop l-${s.l}${s.wide ? ' wide' : ''} ${dir < 0 ? 'bwd' : 'fwd'}" data-id="${s.id}"${s.id === 'harbormaster' ? ' data-hm' : ''}>
+  showHome(false);
+  stopBox.innerHTML = `<article class="stop l-${s.l}${s.wide ? ' wide' : ''} ${dir < 0 ? 'bwd' : 'fwd'}" data-id="${s.id}"${s.id === 'harbormaster' ? ' data-hm' : ''}>
     <header class="sign"><p class="sp2">${bullets.map((b) => `<i class="bu ${b}">${b.toUpperCase()}</i>`).join('')}<span>${num(i)}</span>${s.place ? `<span class="pl">${s.place}</span>` : ''}</p><h1>${s.name}</h1>${s.line ? `<p class="ln1">${s.line}</p>` : ''}</header>
     ${s.tabs && s.tabs.length > 1 ? `<div class="tabs" role="tablist">${s.tabs.map((t) => `<button type="button" class="tab" role="tab">${t.t}</button>`).join('')}</div>` : ''}
     <div class="lft" id="lft"></div><div class="rgt" id="rgt"></div>
