@@ -4,7 +4,7 @@
 window.BD = window.BD || {};
 const cv = (el, n, fb) => (getComputedStyle(el).getPropertyValue(n).trim() || fb);
 const reduced = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-const palette = (el) => ({ bg: cv(el, "--bd-panel", cv(el, "--bd-bg", "#0a0c0a")), fg: cv(el, "--bd-fg", "#ece6d9"), dim: cv(el, "--bd-dim", "#a8a396"), rule: cv(el, "--bd-rule", "rgba(236,230,217,.2)"), accent: cv(el, "--bd-accent", "#f5b800"), water: cv(el, "--bd-water", "#6fd6c6"), ember: cv(el, "--bd-ember", "#ff5a1f"), land: cv(el, "--bd-land", "rgba(111,214,198,.12)"), wait: cv(el, "--bd-wait", "rgba(128,128,128,.35)"), fly: cv(el, "--bd-fly", cv(el, "--bd-dim", "#8a8678")), mono: cv(el, "--bd-font-mono", "ui-monospace,Menlo,monospace"), sans: cv(el, "--bd-font-body", "system-ui,sans-serif") });
+const palette = (el) => ({ bg: cv(el, "--bd-panel", cv(el, "--bd-bg", "#0a0c0a")), fg: cv(el, "--bd-fg", "#ece6d9"), dim: cv(el, "--bd-dim", "#a8a396"), rule: cv(el, "--bd-rule", "rgba(236,230,217,.2)"), accent: cv(el, "--bd-accent", "#f5b800"), water: cv(el, "--bd-water", "#6fd6c6"), ember: cv(el, "--bd-ember", "#ff5a1f"), land: cv(el, "--bd-land", "rgba(111,214,198,.12)"), wait: cv(el, "--bd-wait", "rgba(128,128,128,.35)"), fly: cv(el, "--bd-fly", cv(el, "--bd-dim", "#8a8678")), mono: cv(el, "--bd-font-mono", "ui-monospace,Menlo,monospace"), sans: cv(el, "--bd-font-body", "system-ui,sans-serif"), led: cv(el, "--led", cv(el, "--bd-accent", "#ffb300")) });
 
 /* Fleet model: slider-driven event simulation of aircraft sharing refill stations. */
 const TANK = 2, FLOW = 10 / 60, SORTIE = 60, SERVICE = 90, T_END = 600;
@@ -43,13 +43,12 @@ function fleet(root, o) {
 
 /* Harbormaster board: six aircraft loop from three refill stations to a fire and back, drawn like a line map. A station is kept for an aircraft that goes quiet. */
 const OUT = 24, SPRAY = 12, BACK = 24, SVC = 90, ROLL = 10, SPEED = 4;
-const DOING = { out: "Flying to the fire", spray: "Spraying", back: "Flying back", queue: "Waiting", refill: "Refilling", lost: "No signal", down: "Landed" };
-const START = "Six aircraft share three refill stations. Each one waits its turn for a free station, and no station is ever given to two aircraft at once.", WATCH = "Watch aircraft 3. It goes in as soon as a station is free.";
+const START = "Six aircraft, three refill stations, one fire. Harbormaster gives each aircraft its turn, and never sends two to the same station.";
 const sat = (v) => Math.max(0, Math.min(1, v)), ease = (t) => { const k = sat(t); return k * k * (3 - 2 * k); };
 function fresh() {
   /* The model's steady state: an aircraft takes off every 30 seconds and every station has one aircraft in it. */
   const units = [0, 1, 2, 3, 4, 5].map((i) => { const c = 12 + i * 30, phase = c < 24 ? "out" : c < 36 ? "spray" : c < 60 ? "back" : c < 90 ? "queue" : "refill", t = c - { out: 0, spray: 24, back: 36, queue: 60, refill: 90 }[phase]; return { id: i + 1, phase, t, bay: 2 - (i % 3), tank: phase === "out" ? 1 : phase === "refill" ? sat((t - ROLL) / (SVC - ROLL)) : 0, q: phase === "back" ? 1 : 0, from: 0 }; });
-  return { units, busy: [6, 5, 4], held: [0, 0, 0], say: START, log: WATCH, pend: false };
+  return { units, busy: [6, 5, 4], held: [0, 0, 0], say: START, pend: false };
 }
 const airborne = (s) => { const U = s.units; return U.find((u) => u.phase === "out" && u.t > 8 && u.t < OUT - 1) || U.find((u) => u.phase === "back" && u.t < 9) || U.find((u) => u.phase === "spray") || U.find((u) => u.phase === "out" && u.t > 8); };
 function cut(s, u) {
@@ -58,9 +57,9 @@ function cut(s, u) {
   if (k < 0) { let most = -1; s.units.forEach((v) => { if (v.phase === "refill" && !s.held[v.bay] && v.t > most) { most = v.t; k = v.bay; } }); }
   if (k < 0) k = u.bay;
   s.held[k] = u.id; u.keep = k;
-  s.say = `Aircraft ${u.id} has gone quiet. Harbormaster keeps a refill station reserved for it, shown in red. No other aircraft is sent there until a person confirms it has landed.`;
+  s.say = "One aircraft has gone quiet. Harbormaster keeps a refill station reserved for it, shown in red. No other aircraft is sent there until a person confirms it has landed.";
 }
-function land(s) { const u = s.units.find((v) => v.phase === "lost"); if (!u) return; u.phase = "down"; s.held[u.keep] = 0; s.say = `Aircraft ${u.id} is confirmed on the ground. Its refill station is back in use.`; }
+function land(s) { const u = s.units.find((v) => v.phase === "lost"); if (!u) return; u.phase = "down"; s.held[u.keep] = 0; s.say = "A person has confirmed it is on the ground. Its refill station is back in use."; }
 function stepBoard(s, dt) {
   const U = s.units, turn = (a, b) => b.t - a.t;
   U.forEach((u) => {
@@ -71,93 +70,112 @@ function stepBoard(s, dt) {
     else if (u.phase === "back" && u.t >= BACK) { u.phase = "queue"; u.t -= BACK; }
   });
   /* Hand out turns: whoever has waited longest gets the next free station. A reserved station is never given out. */
-  for (const u of U.filter((v) => v.phase === "queue").sort(turn)) { const k = s.busy.findIndex((b, i) => !b && !s.held[i]); if (k < 0) break; s.busy[k] = u.id; u.bay = k; u.phase = "refill"; u.t = 0; u.from = u.q; s.log = `A station is free. Aircraft ${u.id} takes its turn.`; }
+  for (const u of U.filter((v) => v.phase === "queue").sort(turn)) { const k = s.busy.findIndex((b, i) => !b && !s.held[i]); if (k < 0) break; s.busy[k] = u.id; u.bay = k; u.phase = "refill"; u.t = 0; u.from = u.q; }
   U.filter((v) => v.phase === "queue").sort(turn).concat(U.filter((v) => v.phase === "back").sort(turn)).forEach((u, i) => { u.q += (i - u.q) * (1 - Math.exp(-dt / 2.5)); });
   if (s.pend) { const u = airborne(s); if (u) cut(s, u); }
 }
-/* Where everything sits for a canvas of w by h. The loop: stations on the left, the fire inside the turn on the right. */
+const uncut = (s, u) => { u.phase = u.was; s.held[u.keep] = 0; delete u.lt; };
+/* The picture is a side view, drawn as plainly as a diagram in a children's book: refill stations on the ground at the left, the fire at the right, aircraft in the air between them, and Harbormaster's ground station in the middle with a radio link to every aircraft in the air. */
 function lay(w, h) {
-  const sm = w < 430 || h < 190, pad = sm ? 14 : 22, r = sm ? 9 : 11, box = 2 * r + (sm ? 12 : 14), sp = box + (sm ? 10 : 16), R = Math.max(24, Math.min((h - 2 * (pad + r + 6)) / 2, w * 0.26)), cy = h / 2, bx = [0, 1, 2].map((k) => pad + box / 2 + 2 + k * sp);
-  return { sm, r, box, R, cy, yT: cy - R, yB: cy + R, fx: w - pad - R - r - 5, bx, q0: bx[2] + sp * 0.95, qs: 2 * r + (sm ? 10 : 12) };
+  /* A narrow canvas packs things closer so they can be drawn bigger. Spare height is shared above and below, so the picture sits in the middle. */
+  const k = Math.max(0.6, Math.min(1.7, Math.min(w / (w < 520 ? 400 : 470), h / 330))), pad = 14 * k, rise = w < 520 ? 205 : 262, gy = h - 34 * k - Math.max(0, (h - (rise + 58) * k) / 2), tw = 46 * k, th = 36 * k, tx = [0, 1, 2].map((i) => pad + tw / 2 + i * (tw + 12 * k)), tr = tx[2] + tw / 2, fw = 80 * k, fx = w - pad - fw / 2;
+  const padY = gy - th - 13 * k, hov = gy - 128 * k, apex = Math.max(22 * k, gy - rise * k);
+  /* Aircraft waiting for a turn hover in a stack, the next one to go at the bottom. */
+  return { k, gy, tw, th, tx, fx, fw, padY, hov, slotY: gy - 98 * k, s0: tr + 70 * k, sg: 27 * k, hx: tr + (fx - fw / 2 - tr) * 0.6, outC: 2 * (apex - 0.25 * (padY + hov)), backC: gy - 72 * k };
 }
-const rnd = (p, c) => { const o = [p[0]]; for (let i = 1; i < p.length - 1; i++) { const [ax, ay] = p[i - 1], [px, py] = p[i], [bx, by] = p[i + 1], da = Math.hypot(ax - px, ay - py) || 1, db = Math.hypot(bx - px, by - py) || 1, ca = Math.min(c, da / 2), cb = Math.min(c, db / 2), A = [px + ((ax - px) / da) * ca, py + ((ay - py) / da) * ca], B = [px + ((bx - px) / db) * cb, py + ((by - py) / db) * cb]; for (let k = 0; k <= 4; k++) { const t = k / 4, m = 1 - t; o.push([m * m * A[0] + 2 * m * t * px + t * t * B[0], m * m * A[1] + 2 * m * t * py + t * t * B[1]]); } } o.push(p[p.length - 1]); return o; };
-const along = (p, f) => { const seg = []; let L = 0; for (let i = 1; i < p.length; i++) { const d = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); seg.push(d); L += d; } let d = sat(f) * L; for (let i = 0; i < seg.length; i++) { if (d <= seg[i] || i === seg.length - 1) { const k = seg[i] ? Math.min(1, d / seg[i]) : 0; return [p[i][0] + (p[i + 1][0] - p[i][0]) * k, p[i][1] + (p[i + 1][1] - p[i][1]) * k]; } d -= seg[i]; } return p[0]; };
-function place(u, L) {
-  const ph = u.phase === "lost" ? u.was : u.phase, xs = L.q0 + u.q * L.qs, b = L.bx[u.bay], c = L.r + 3;
-  if (ph === "out") { const k = sat(u.t / OUT), a = 0.3, v = 1 / (1 - a / 2); return along(rnd([[b, L.cy], [b, L.yT], [L.fx, L.yT]], c), k < a ? (v * k * k) / (2 * a) : v * (a / 2 + k - a)); }
-  if (ph === "spray") { const th = -Math.PI / 2 + Math.PI * sat(u.t / SPRAY); return [L.fx + L.R * Math.cos(th), L.cy + L.R * Math.sin(th)]; }
-  if (ph === "back") { const k = sat(u.t / BACK); return [L.fx + (xs - L.fx) * k * (2 - k), L.yB]; }
-  if (ph === "queue") return [xs, L.yB];
-  return along(rnd([[L.q0 + u.from * L.qs, L.yB], [b, L.yB], [b, L.cy]], c), ease(u.t / ROLL));
+const bez = (a, c, b, t) => { const m = 1 - t; return [m * m * a[0] + 2 * m * t * c[0] + t * t * b[0], m * m * a[1] + 2 * m * t * c[1] + t * t * b[1]]; };
+function place(u, L, T) {
+  const ph = u.phase === "lost" ? u.was : u.phase, k = L.k, sx = L.s0, sy = (q) => L.slotY - q * L.sg, pad = [L.tx[u.bay], L.padY], bob = Math.sin(T * 1.6 + u.id * 1.9) * 2 * k;
+  if (ph === "out") { const f = ease(u.t / OUT), p = bez(pad, [pad[0] + (L.fx - pad[0]) * 0.42, L.outC], [L.fx - 24 * k, L.hov], f); return [p[0], p[1], Math.sin(f * Math.PI) * 0.13]; }
+  if (ph === "spray") return [L.fx - 24 * k + 48 * k * sat(u.t / SPRAY), L.hov + bob, 0];
+  if (ph === "back") { const f = ease(u.t / BACK), p = bez([L.fx + 24 * k, L.hov], [(L.fx + sx) / 2, L.backC], [sx, sy(u.q)], f); return [p[0], p[1] + bob * f, -Math.sin(f * Math.PI) * 0.13]; }
+  if (ph === "queue") return [sx, sy(u.q) + bob, 0];
+  const f = ease(u.t / ROLL), p = bez([sx, sy(u.from)], [pad[0], sy(u.from)], pad, f); return [p[0], p[1] + bob * (1 - f), 0];
 }
-function drawBoard(c, s, T, P) {
-  const dpr = Math.min(devicePixelRatio || 1, 3), w = c.clientWidth || 600, h = c.clientHeight || 280; if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
-  const x = c.getContext("2d"), L = lay(w, h), { sm, r, box, R, cy, yT, yB, fx, bx } = L, TAU = Math.PI * 2, cr = r + 3, bs = box / 2, slot = (i) => L.q0 + i * L.qs;
-  const font = (px, wt) => { x.font = `${wt || 600} ${px}px ${P.sans}`; }, text = (t, px, py, al, col) => { x.textAlign = al || "left"; x.fillStyle = col || P.dim; x.fillText(t, px, py); };
-  const box4 = (px, py, sz, rad) => { x.beginPath(); x.moveTo(px + rad, py); x.arcTo(px + sz, py, px + sz, py + sz, rad); x.arcTo(px + sz, py + sz, px, py + sz, rad); x.arcTo(px, py + sz, px, py, rad); x.arcTo(px, py, px + sz, py, rad); x.closePath(); };
-  x.setTransform(dpr, 0, 0, dpr, 0, 0); x.fillStyle = P.bg; x.fillRect(0, 0, w, h); x.lineCap = "round"; x.lineJoin = "round"; x.textBaseline = "middle";
-  const lost = s.units.find((u) => u.phase === "lost");
-  /* the track */
-  x.strokeStyle = P.fg; x.globalAlpha = 0.26; x.lineWidth = sm ? 2 : 2.5; x.beginPath(); x.moveTo(bx[0] + cr, yT); x.lineTo(fx, yT); x.arc(fx, cy, R, -Math.PI / 2, Math.PI / 2); x.lineTo(bx[0] + cr, yB);
-  bx.forEach((b) => { x.moveTo(b + cr, yB); x.arcTo(b, yB, b, yB - cr, cr); x.lineTo(b, yT + cr); x.arcTo(b, yT, b + cr, yT, cr); }); x.stroke();
-  /* which way it runs, and where the line forms */
-  const mid = (bx[2] + cr + fx) / 2, backX = (slot(2) + r + fx) / 2; x.globalAlpha = 0.6; x.lineWidth = 1.6;
-  [[mid, yT, 1], [backX, yB, -1]].forEach(([px, py, d]) => { x.beginPath(); x.moveTo(px - 4 * d, py - 5); x.lineTo(px + 3 * d, py); x.lineTo(px - 4 * d, py + 5); x.stroke(); });
-  x.globalAlpha = 1; for (let i = 0; i < 3; i++) { x.beginPath(); x.arc(slot(i), yB, r - 1.5, 0, TAU); x.fillStyle = P.bg; x.fill(); x.globalAlpha = 0.3; x.lineWidth = 1.2; x.setLineDash([2, 3]); x.stroke(); x.setLineDash([]); x.globalAlpha = 1; }
-  /* labels, all inside the loop */
-  font(sm ? 11 : 12.5); const topY = yT + r + 15, botY = yB - r - 13, waitW = x.measureText("Waiting for a turn").width, waitX = slot(0) - r;
-  const roomy = R >= 46; if (roomy && !(lost && lost.was === "out")) text(sm ? "To the fire" : "Flying to the fire", mid, topY, "center");
-  text("Waiting for a turn", waitX, botY);
-  if (roomy && fx - (waitX + waitW) > x.measureText("Flying back").width + 40) text("Flying back", (waitX + waitW + fx) / 2 + 6, botY, "center");
-  const refill = sm ? "Refill" : "Refill stations", refX = bx[2] + bs + (sm ? 9 : 12), refEnd = refX + x.measureText(refill).width; text(refill, refX, cy);
+function drawScene(c, s, T, P, o) {
+  o = o || {}; const dpr = Math.min(devicePixelRatio || 1, 3), w = c.clientWidth || 600, h = c.clientHeight || 400; if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+  const x = c.getContext("2d"), L = lay(w, h), { k, gy, tw, th, tx, fx, fw } = L, TAU = Math.PI * 2, hm = o.hm === undefined ? 1 : o.hm, still = !!o.still, HMC = P.led, fs = Math.max(11, Math.min(15, 11 * k));
+  const font = (px, wt) => { x.font = `${wt || 600} ${px}px ${P.sans}`; }, text = (t, px, py, al, col) => { x.textAlign = al || "center"; x.fillStyle = col || P.dim; x.fillText(t, px, py); };
+  const line = (a, b, c2, d) => { x.beginPath(); x.moveTo(a, b); x.lineTo(c2, d); x.stroke(); };
+  x.setTransform(dpr, 0, 0, dpr, 0, 0); x.fillStyle = P.bg; x.fillRect(0, 0, w, h); x.lineCap = "round"; x.lineJoin = "round"; x.textBaseline = "middle"; x.setLineDash([]);
+  const lw = Math.max(1.3, 1.6 * k), lost = s.units.find((u) => u.phase === "lost"), spots = s.units.map((u) => place(u, L, T));
+  s.units.forEach((u, i) => { if (u.phase !== "lost") return; if (u.lt === undefined) u.lt = T; /* an aircraft that has gone quiet is shown off to one side, above the fire, where nothing else flies */ const e = still ? 1 : ease((T - u.lt) / 1.6), to = [fx + 6 * k, Math.max(40 * k, L.hov - 64 * k)]; spots[i] = [spots[i][0] + (to[0] - spots[i][0]) * e, spots[i][1] + (to[1] - spots[i][1]) * e, 0]; });
+  /* the ground, and a name under each thing standing on it */
+  x.strokeStyle = P.fg; x.globalAlpha = 0.3; x.lineWidth = 1; line(0, gy, w, gy); x.globalAlpha = 1;
+  font(fs); text("Refill stations", tx[1], gy + 19 * k); text("Fire", fx, gy + 19 * k, "center", P.ember);
+  /* the refill stations: a tank of water with a pad on top */
+  tx.forEach((t, i) => {
+    const hd = s.held[i], l = t - tw / 2, top = gy - th, lvl = gy - th * 0.62;
+    x.fillStyle = P.water; x.globalAlpha = 0.3; x.fillRect(l + 1, lvl, tw - 2, gy - lvl - 1); x.globalAlpha = 0.9; x.strokeStyle = P.water; x.lineWidth = 1.2; x.beginPath(); for (let j = 0; j <= 8; j++) { const px = l + 2 + ((tw - 4) * j) / 8, py = lvl + (still ? 0 : Math.sin(T * 1.4 + j * 1.1 + i) * 1.2 * k); j ? x.lineTo(px, py) : x.moveTo(px, py); } x.stroke(); x.globalAlpha = 1;
+    x.strokeStyle = hd ? P.ember : P.fg; x.lineWidth = lw; if (hd) x.setLineDash([5 * k, 4 * k]); x.beginPath(); x.moveTo(l, gy); x.lineTo(l, top + 5 * k); x.quadraticCurveTo(l, top, l + 5 * k, top); x.lineTo(l + tw - 5 * k, top); x.quadraticCurveTo(l + tw, top, l + tw, top + 5 * k); x.lineTo(l + tw, gy); x.stroke(); x.setLineDash([]);
+    x.lineWidth = lw * 1.5; line(l - 3 * k, top - 3 * k, l + tw + 3 * k, top - 3 * k);
+    if (hd) { font(fs, 700); const half = x.measureText("Reserved").width / 2 + 3; text("Reserved", Math.max(half, t), top - (s.busy[i] ? 34 : 14) * k, "center", P.ember); }
+  });
   /* the fire */
-  const fr = Math.max(8, Math.min(22, R * 0.2)), pulse = (Math.sin(T * 1.7) + 1) / 2; x.strokeStyle = P.ember; x.lineWidth = 1.5;
-  [fr, fr * 1.75 + pulse * 2].forEach((rad, i) => { x.globalAlpha = i ? 0.3 + (1 - pulse) * 0.25 : 1; x.beginPath(); x.arc(fx, cy, rad, 0, TAU); x.stroke(); }); x.globalAlpha = 1; x.fillStyle = P.ember; x.beginPath(); x.arc(fx, cy, 4 + pulse, 0, TAU); x.fill();
-  font(sm ? 11 : 12.5); const fireX = fx - fr * 1.75 - (sm ? 8 : 11); if (fireX - x.measureText("Fire").width - refEnd > 28) text("Fire", fireX, cy, "right", P.ember); else if (R >= 50) text("Fire", fx, cy + fr * 1.75 + 13, "center", P.ember);
-  /* the stations */
-  bx.forEach((b, k) => {
-    const hd = s.held[k]; x.fillStyle = P.bg; box4(b - bs, cy - bs, box, 7); x.fill();
-    if (hd) { x.save(); box4(b - bs, cy - bs, box, 7); x.clip(); x.strokeStyle = P.ember; x.globalAlpha = 0.34; x.lineWidth = 1; x.beginPath(); for (let d = -box; d < box; d += 6) { x.moveTo(b - bs + d, cy + bs); x.lineTo(b - bs + d + box, cy - bs); } x.stroke(); x.restore(); }
-    x.globalAlpha = hd ? 1 : 0.75; x.strokeStyle = hd ? P.ember : P.fg; x.lineWidth = hd ? 2 : 1.5; if (hd) x.setLineDash([5, 4]); box4(b - bs, cy - bs, box, 7); x.stroke(); x.setLineDash([]); x.globalAlpha = 1;
-    if (hd && !s.busy[k]) { x.beginPath(); x.arc(b, cy, r, 0, TAU); x.fillStyle = P.bg; x.fill(); x.strokeStyle = P.ember; x.lineWidth = 1.6; x.setLineDash([3, 3]); x.stroke(); x.setLineDash([]); font(sm ? 11 : 12.5, 800); text(String(hd), b, cy + 0.5, "center", P.ember); }
+  [[0, 66, 30, 0], [-24, 40, 22, 1.7], [24, 44, 22, 3.1]].forEach(([dx, fh, fwd, ph]) => {
+    const cx = fx + dx * k, hh = fh * k * (still ? 1 : 1 + 0.07 * Math.sin(T * 5.2 + ph)), ww = fwd * k, sw = still ? 0 : Math.sin(T * 3.1 + ph) * 3 * k;
+    [[1, P.ember], [0.5, HMC]].forEach(([sc, col]) => { const H2 = hh * sc, W2 = ww * sc; x.strokeStyle = col; x.lineWidth = lw; x.beginPath(); x.moveTo(cx - W2 / 2, gy); x.bezierCurveTo(cx - W2 * 0.8, gy - H2 * 0.42, cx - W2 * 0.15 + sw, gy - H2 * 0.6, cx + sw, gy - H2); x.bezierCurveTo(cx + W2 * 0.15 + sw, gy - H2 * 0.6, cx + W2 * 0.8, gy - H2 * 0.42, cx + W2 / 2, gy); x.stroke(); });
   });
-  /* the aircraft */
-  const dots = s.units.filter((u) => u.phase !== "down").sort((a, b) => (b.phase === "lost") - (a.phase === "lost"));
-  dots.forEach((u) => {
-    const [X, Y] = place(u, L), gone = u.phase === "lost";
-    if (u.phase === "spray") { const dx = fx - X, dy = cy - Y, d = Math.hypot(dx, dy) || 1, a = r + 7, b = d - fr * 1.75 - 4; if (b > a) { x.strokeStyle = P.water; x.lineWidth = 2; x.setLineDash([2, 6]); x.lineDashOffset = -T * 26; x.beginPath(); x.moveTo(X + (dx / d) * a, Y + (dy / d) * a); x.lineTo(X + (dx / d) * b, Y + (dy / d) * b); x.stroke(); x.setLineDash([]); x.lineDashOffset = 0; } }
-    if (gone) {
-      const beat = (Math.sin(T * 2.4) + 1) / 2; x.strokeStyle = P.ember; x.globalAlpha = 0.18 + beat * 0.3; x.lineWidth = 1.5; x.beginPath(); x.arc(X, Y, r + 5 + beat * 2, 0, TAU); x.stroke(); x.globalAlpha = 1;
-      x.beginPath(); x.arc(X, Y, r, 0, TAU); x.fillStyle = P.bg; x.fill(); x.lineWidth = 2; x.setLineDash([3, 3]); x.stroke(); x.setLineDash([]);
-      font(sm ? 11 : 12.5, 800); text(String(u.id), X, Y + 0.5, "center", P.ember);
-      if (u.was !== "spray") { font(sm ? 11 : 12.5); const tw = x.measureText("No signal").width / 2 + 4; text("No signal", Math.max(tw, Math.min(w - tw, X)), u.was === "out" ? Y + r + 15 : Y + r + 12, "center", P.ember); }
-      return;
-    }
-    x.lineWidth = 2.5; x.strokeStyle = P.fg; x.globalAlpha = 0.18; x.beginPath(); x.arc(X, Y, r + 3.5, 0, TAU); x.stroke(); x.globalAlpha = 1;
-    if (u.tank > 0.01) { x.strokeStyle = P.water; x.beginPath(); x.arc(X, Y, r + 3.5, -Math.PI / 2, -Math.PI / 2 + TAU * Math.min(1, u.tank)); x.stroke(); }
-    x.beginPath(); x.arc(X, Y, r, 0, TAU); x.fillStyle = P.fg; x.fill(); font(sm ? 11 : 12.5, 800); text(String(u.id), X, Y + 0.5, "center", P.bg);
+  /* Harbormaster: a screen on the ground with an aerial, and a radio link to each aircraft in the air */
+  if (hm > 0.01) {
+    const hx = L.hx, up = (1 - hm) * 8 * k, sw2 = 50 * k, sh = 32 * k, st = gy - 46 * k + up, ax = hx + 36 * k, ay = gy - 64 * k + up;
+    x.globalAlpha = hm; x.strokeStyle = HMC; x.fillStyle = P.bg; x.lineWidth = lw;
+    s.units.forEach((u, i) => {
+      const ph = u.phase === "lost" ? u.was : u.phase; if (u.phase === "down" || ph === "refill") return; const [X, Y] = spots[i], dx = X - ax, dy = Y - ay, d = Math.hypot(dx, dy) || 1, end = (d - 20 * k) / d;
+      if (u.phase === "lost") { x.strokeStyle = P.ember; x.setLineDash([2, 5]); /* its link is cut: a short stub left hanging from the aircraft */ const a0 = (d - 21 * k) / d, a1 = (d - 31 * k) / d, cutAt = (d - 38 * k) / d; line(ax + dx * a0, ay + dy * a0, ax + dx * a1, ay + dy * a1); x.setLineDash([]); const mx = ax + dx * cutAt, my = ay + dy * cutAt, e = 4.5 * k; x.lineWidth = lw * 1.3; line(mx - e, my - e, mx + e, my + e); line(mx - e, my + e, mx + e, my - e); x.lineWidth = lw; x.strokeStyle = HMC; return; }
+      x.globalAlpha = hm * 0.5; x.setLineDash([2, 5]); line(ax, ay, ax + dx * end, ay + dy * end); x.setLineDash([]);
+      if (!still) { const f = (T * 0.45 + u.id * 0.17) % 1; x.globalAlpha = hm * Math.sin(f * Math.PI); x.fillStyle = HMC; x.beginPath(); x.arc(ax + dx * end * f, ay + dy * end * f, 2.2 * k, 0, TAU); x.fill(); x.fillStyle = P.bg; }
+      x.globalAlpha = hm;
+    });
+    x.beginPath(); x.rect(hx - sw2 / 2, st, sw2, sh); x.fill(); x.stroke(); line(hx, st + sh, hx, gy + up); line(hx - 14 * k, gy, hx + 14 * k, gy);
+    x.globalAlpha = hm * 0.75; x.lineWidth = Math.max(1, 1.2 * k); [0, 1, 2].forEach((r) => { const ry = st + (8 + r * 8) * k; x.beginPath(); x.arc(hx - 17 * k, ry, 1.6 * k, 0, TAU); x.fillStyle = HMC; x.fill(); line(hx - 11 * k, ry, hx + (r === 1 ? 8 : 16) * k, ry); }); x.fillStyle = P.bg;
+    x.globalAlpha = hm; x.lineWidth = lw; line(ax, gy, ax, ay); x.beginPath(); x.arc(ax, ay, 2.6 * k, 0, TAU); x.fillStyle = HMC; x.fill();
+    [9, 15].forEach((r, i) => { x.globalAlpha = hm * (still ? 0.6 : 0.3 + 0.5 * ((Math.sin(T * 2.4 - i * 1.1) + 1) / 2)); x.beginPath(); x.arc(ax, ay, r * k, -Math.PI * 0.8, -Math.PI * 0.2); x.stroke(); });
+    x.globalAlpha = hm; font(fs, 700); text("Harbormaster", hx + 4 * k, gy + 19 * k, "center", HMC);
+    const next = s.units.findIndex((u) => u.phase === "queue" && u.q < 0.4); if (next >= 0) { const [X, Y] = spots[next]; const tf = Math.max(10.5, Math.min(14, 10.5 * k)); font(tf, 700); const t = "Next", tw2 = x.measureText(t).width + tf, tcx = X - 27 * k - tw2 / 2; x.fillStyle = HMC; x.beginPath(); x.rect(tcx - tw2 / 2, Y - tf * 0.8, tw2, tf * 1.6); x.fill(); text(t, tcx, Y + 0.5, "center", P.bg); }
+    x.globalAlpha = 1;
+  }
+  /* the aircraft: two rotors, a body, and a tank underneath that shows the water left */
+  s.units.forEach((u, i) => {
+    if (u.phase === "down") return; const [X, Y, tilt] = spots[i], gone = u.phase === "lost", col = gone ? P.ember : P.fg, ph = gone ? u.was : u.phase;
+    if (u.phase === "spray") { x.strokeStyle = P.water; x.lineWidth = lw; x.setLineDash([2, 6]); x.lineDashOffset = still ? 0 : -T * 30; [-10, 0, 10].forEach((d) => line(X + d * 0.3 * k, Y + 14 * k, X + d * k, gy - 34 * k)); x.setLineDash([]); x.lineDashOffset = 0; }
+    x.save(); x.translate(X, Y); x.rotate(tilt || 0); x.strokeStyle = col; x.fillStyle = P.bg; x.lineWidth = lw; if (gone) x.setLineDash([3, 3]);
+    line(-15 * k, -3 * k, 15 * k, -3 * k);
+    [-15, 15].forEach((rx, j) => { line(rx * k, -3 * k, rx * k, -8 * k); const spin = ph === "refill" && u.t > ROLL ? 0.55 : still || gone ? 0.9 : 0.62 + 0.38 * Math.abs(Math.sin(T * 17 + u.id + j * 1.3)); x.beginPath(); x.ellipse(rx * k, -8.5 * k, 9 * k * spin, 1.7 * k, 0, 0, TAU); x.stroke(); });
+    x.beginPath(); x.rect(-7 * k, -7 * k, 14 * k, 8 * k); x.fill(); x.stroke();
+    const by = 1 * k, bh = 9 * k, lv = gone ? 0 : Math.min(1, u.tank); x.beginPath(); x.rect(-6 * k, by, 12 * k, bh); x.fill(); if (lv > 0.02) { x.fillStyle = P.water; x.fillRect(-6 * k, by + bh * (1 - lv), 12 * k, bh * lv); } x.stroke();
+    x.restore(); x.setLineDash([]);
+    if (gone) { font(fs, 700); const half = x.measureText("No signal").width / 2 + 3; text("No signal", Math.max(half, Math.min(w - half, X)), Y - 21 * k, "center", P.ember); }
   });
+}
+/* The same picture, told as a story: p runs from 0 to 1. Harbormaster arrives a third of the way in, and one aircraft goes quiet two thirds of the way in. Going back up undoes both. */
+function scene(c, root) {
+  let s = fresh(), T = 1, hm = 0; const P = palette(root || c), still = reduced(); P.bg = cv(c, "--bg", P.bg); /* the story sits straight on the page, with no panel behind it */
+  const api = {
+    advance(dt) { T += dt; stepBoard(s, dt * SPEED); },
+    story(p) { hm = ease((p - 0.27) / 0.1); const lost = s.units.find((u) => u.phase === "lost"); if (p >= 0.66 && !lost) { const u = airborne(s); if (u) cut(s, u); else s.pend = true; if (still) for (let i = 0; i < 220; i++) stepBoard(s, 0.2); } else if (p < 0.6) { s.pend = false; if (lost) uncut(s, lost); } },
+    paint() { drawScene(c, s, T, P, { hm, still }); },
+  };
+  api.paint(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(api.paint);
+  return api;
 }
 function board(root, o) {
   o = o || {}; root.classList.add("bdw", "bdw-board"); let s = fresh();
-  root.innerHTML = `<div class="bdw-board__bar"><span>Harbormaster <b>Practice run</b></span><span class="bdw-tag--sim">Simulation, ${SPEED}× speed</span></div>
-  <div class="bdw-board__map"><canvas role="img" aria-label="Diagram: six numbered aircraft loop from three refill stations to a fire and back. The list below says what each one is doing."></canvas></div>
-  <ul class="bdw-board__list">${s.units.map((u) => `<li class="bdw-ac"><i class="bdw-dot" aria-hidden="true"><b>${u.id}</b></i><span><span class="bdw-sr">Aircraft ${u.id}: </span><span data-st></span></span></li>`).join("")}</ul>
-  <div class="bdw-board__foot"><p class="bdw-say" data-say></p><p class="bdw-log" data-log></p><div class="bdw-btns"><button type="button" class="bdw-btn bdw-btn--primary" data-drop>Cut an aircraft's radio link</button><button type="button" class="bdw-btn" data-confirm disabled>Confirm it has landed</button><button type="button" class="bdw-btn bdw-btn--quiet" data-reset>Start over</button></div><p class="bdw-sr" data-live aria-live="polite"></p></div>`;
-  const c = root.querySelector("canvas"), q = (x) => root.querySelector(x), cells = [...root.querySelectorAll(".bdw-ac")], P = palette(root), still = reduced();
-  const put = (el, t) => { if (el.textContent !== t) el.textContent = t; };
+  root.innerHTML = `<div class="bdw-board__bar"><span><b>Practice run</b></span><span class="bdw-tag--sim">Simulation, ${SPEED}× speed</span></div>
+  <div class="bdw-board__map"><canvas role="img" aria-label="Illustration: six aircraft carry water from three refill stations to a fire and come back for more. A ground station named Harbormaster has a radio link to each aircraft in the air."></canvas></div>
+  <div class="bdw-board__foot"><p class="bdw-say" data-say aria-live="polite"></p><div class="bdw-btns"><button type="button" class="bdw-btn bdw-btn--primary" data-drop>Cut an aircraft's radio link</button><button type="button" class="bdw-btn" data-confirm disabled>Confirm it has landed</button><button type="button" class="bdw-btn bdw-btn--quiet" data-reset>Start over</button></div></div>`;
+  const c = root.querySelector("canvas"), q = (x) => root.querySelector(x), P = palette(root), still = reduced();
   const dom = () => {
-    s.units.forEach((u, i) => { const el = cells[i]; put(el.querySelector("[data-st]"), DOING[u.phase]); el.classList.toggle("is-lost", u.phase === "lost"); el.classList.toggle("is-down", u.phase === "down"); el.firstElementChild.style.setProperty("--lv", u.phase === "lost" || u.phase === "down" ? 0 : u.tank.toFixed(2)); });
-    put(q("[data-say]"), s.say); put(q("[data-log]"), s.log);
+    if (q("[data-say]").textContent !== s.say) q("[data-say]").textContent = s.say;
     const lost = s.units.some((u) => u.phase === "lost"), up = s.units.filter((u) => u.phase !== "lost" && u.phase !== "down").length;
     q("[data-drop]").disabled = lost || s.pend || up < 4; q("[data-confirm]").disabled = !lost; q("[data-confirm]").classList.toggle("bdw-btn--primary", lost); q("[data-drop]").classList.toggle("bdw-btn--primary", !lost);
   };
-  let T = 1; const paint = () => drawBoard(c, s, T, P);
+  let T = 1; const paint = () => drawScene(c, s, T, P, { hm: 1, still });
   /* With motion turned off the picture stands still, so each press jumps ahead to show what the press changed. */
-  const act = (fn) => () => { fn(); if (still) for (let i = 0; i < 220; i++) stepBoard(s, 0.2); dom(); paint(); q("[data-live]").textContent = s.say; };
+  const act = (fn) => () => { fn(); if (still) for (let i = 0; i < 220; i++) stepBoard(s, 0.2); dom(); paint(); };
   q("[data-drop]").onclick = act(() => { const u = airborne(s); if (u) cut(s, u); else { s.pend = true; s.say = "The next aircraft to take off will lose its radio link."; } });
   q("[data-confirm]").onclick = act(() => land(s));
-  q("[data-reset]").onclick = () => { s = fresh(); dom(); paint(); q("[data-live]").textContent = "Started over."; };
+  q("[data-reset]").onclick = () => { s = fresh(); dom(); paint(); };
   dom(); paint(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(paint);
   const ro = new ResizeObserver(paint); ro.observe(c);
   const api = { destroy() { ro.disconnect(); } };
@@ -196,5 +214,5 @@ const progress = (el, offset) => { const r = el.getBoundingClientRect(), span = 
 function reveal(sel, cls) { const els = [...document.querySelectorAll(sel || "[data-reveal]")]; if (reduced() || /[?&]qa\b/.test(location.search)) { els.forEach((e) => e.classList.add(cls || "is-in")); return; } const io = new IntersectionObserver((en) => en.forEach((e) => { if (e.isIntersecting) { e.target.classList.add(cls || "is-in"); io.unobserve(e.target); } }), { threshold: 0.14, rootMargin: "0px 0px -6% 0px" }); els.forEach((e) => io.observe(e)); }
 function onScroll(fn) { let t = 0; const r = () => { t = 0; fn(); }; addEventListener("scroll", () => { if (!t) t = requestAnimationFrame(r); }, { passive: true }); addEventListener("resize", r, { passive: true }); fn(); }
 function count(el, to, dur) { const n = parseFloat(String(to).replace(/,/g, "")), fmt = (v) => (String(to).includes(",") ? Math.round(v).toLocaleString("en-US") : Math.round(v)); if (reduced() || /[?&]qa\b/.test(location.search)) { el.textContent = fmt(n); return; } const t0 = performance.now(); const go = (now) => { const k = clamp((now - t0) / (dur || 1200), 0, 1); el.textContent = fmt(n * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(go); }; requestAnimationFrame(go); }
-Object.assign(BD, { widgets: { fleet, board, interlock, runFleet }, util: { clamp, progress, reveal, onScroll, count, reduced } });
+Object.assign(BD, { widgets: { fleet, board, scene, interlock, runFleet }, util: { clamp, progress, reveal, onScroll, count, reduced } });
 })();

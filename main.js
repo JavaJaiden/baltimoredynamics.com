@@ -144,6 +144,8 @@ const narrow = () => innerWidth <= 860 || (innerHeight <= 520 && innerWidth > in
 const DZSTEPS = ['It starts on land. Fertilizer washes into the Bay and feeds algae.', 'When the algae die, bacteria use up the oxygen in the water. Fish and crabs leave or die. That water is now a dead zone.', 'From the surface it looks the same, so it has to be measured. Our first machines were built for that: a boat that could hold its position against the current and sensors that didn\'t need a person standing over them.'];
 const DZBG = '<canvas class="dzc" aria-hidden="true"></canvas><i class="dzsh" aria-hidden="true"></i>';
 const DZFG = `<ol class="dzst">${DZSTEPS.map(li).join('')}</ol><aside class="o2" aria-hidden="true"><p class="o2h">Oxygen in the water<br><em>Illustration</em></p><p class="o2r">~7 mg/L</p><div class="o2rail"><i></i><span style="bottom:87.5%">Healthy water<br>~7&nbsp;mg/L</span><span class="lo" style="bottom:25%">Dead zone<br>below 2&nbsp;mg/L</span></div></aside>`;
+const HMPIC = 'Illustration: aircraft carry water from three refill stations to a fire and come back for more. A ground station named Harbormaster has a radio link to each aircraft in the air.';
+const HMST = `<p class="hmpip" aria-hidden="true"><i class="on"></i><i></i><i></i></p><ol class="hmst">${HM.story.map(li).join('')}</ol>`;
 const FIG = (i, s) => `<div class="stg"><canvas aria-hidden="true"></canvas><svg class="lead" aria-hidden="true"></svg><div class="lead__labels" aria-hidden="true"></div><p class="vh">Exploded drawing of ${s.name}. A drawing: no hardware is shown. ${ch[i].label}.</p></div>`;
 
 const RIDE = {
@@ -153,7 +155,7 @@ const RIDE = {
   rover: { pin: 'ex' },
   swarm: { pin: 'ex' },
   overhead: { pin: 'ex' },
-  harbormaster: { html: `<div class="wid"></div><p class="fine look">${HM.look}</p>`, after: widget('board'), cta: 'See how Harbormaster works', extra: sub(HM.plain), blurb: HM.short },
+  harbormaster: { pin: 'hm', cta: 'See how Harbormaster works', extra: HMST },
   status: { html: `<dl class="big four">${ST.stats.map(([a, b]) => `<div><dt data-n="${a.replace(/\D/g, '')}">${a}</dt><dd>${b}</dd></div>`).join('')}</dl>`, cta: 'See what exists today' },
   crew: { wide: 1, line: 'The people behind the work.', html: `<ul class="crw">${PEOPLE.map((p, k) => `<li><a href="#crew" data-k="${k}">${photo(p.photo.src, p.photo.alt)}<b>${p.name}</b><span>${p.role}</span></a></li>`).join('')}</ul>`, cta: 'Meet the crew' },
   origin: { wide: 1, html: `<ol class="otl">${O.timeline.map(([d, t]) => `<li><i></i><time>${d}</time><b>${t}</b></li>`).join('')}</ol>`, cta: 'Read the story' },
@@ -170,6 +172,7 @@ const rideSec = (s, i) => {
   const at = `class="rd ${side} l-${s.l} rd-${s.id}${V.wide ? ' wide' : ''}${V.fl ? ' fl' : ''}${V.pin ? ' pinned ' + V.pin : ''}" id="rd-${s.id}" aria-labelledby="rh-${s.id}"${s.id === 'harbormaster' ? ' data-hm' : ''}`;
   if (V.pin === 'dz') return `<section ${at}><div class="hold"><div class="pin">${DZBG}${txt}${DZFG}</div></div></section>`;
   if (V.pin === 'ex') return `<section ${at}><div class="hold"><div class="pin">${txt}<div class="vis">${FIG(i, s)}</div></div></div></section>`;
+  if (V.pin === 'hm') return `<section ${at}><div class="hold"><div class="pin">${txt}<div class="vis"><figure class="hmv"><canvas class="hmc" role="img" aria-label="${HMPIC}"></canvas><figcaption>Illustration</figcaption></figure></div></div></div></section>`;
   return `<section ${at}>${txt}<div class="vis"><div class="vin">${V.html}</div></div></section>`;
 };
 const RIDEHTML = () => `<div class="ride" id="ride"><svg class="track" aria-hidden="true"></svg><p class="ride-cue"><i></i>Scroll to ride the line</p>${STOPS.map(rideSec).join('')}
@@ -226,6 +229,22 @@ function machineStage(sec, id) {
   if (M.labels && M.labels.length) L = leaders(host, M, s);
   let still = -1;
   return { set(v) { Object.assign(tgt, v); if (reduced && s && tgt.e !== still) { still = tgt.e; tgt.yaw = 0; tgt.pitch = 0; s.render(); s.render(); } else if (reduced) { tgt.yaw = 0; tgt.pitch = 0; } }, gone() { try { s.destroy(); const gl = canvas.getContext('webgl'); const x = gl && gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); } catch (err) {} } };
+}
+/* Harbormaster's picture, told in three steps. On the line the scroll drives it, on a phone card it plays by itself. */
+function hmStory(sec, src) {
+  const c = $('.hmc', sec), steps = $$('.hmst li', sec), pips = $$('.hmpip i', sec), trk = $('.hold', sec), sc = BD.widgets.scene(c, sec);
+  let vis = false, raf = 0, last = 0, on = -1;
+  const forced = QA && /[?&]hm=/.test(location.search) ? +/[?&]hm=([\d.]+)/.exec(location.search)[1] : null;
+  const prog = () => { const r = trk.getBoundingClientRect(), hh = hd.offsetHeight; return clamp01(-(r.top - hh) / Math.max(1, r.height - (innerHeight - hh))); };
+  const update = () => {
+    const P = forced !== null ? forced : reduced ? 1 : src ? src() : prog(), k = P < .3 ? 0 : P < .64 ? 1 : 2;
+    steps.forEach((el, i) => { const w = [[-1, .3], [.3, .64], [.64, 2]][i], a = reduced ? 1 : smooth(w[0], w[0] + .05, P) * (1 - smooth(w[1] - .05, w[1], P)); el.style.opacity = a.toFixed(3); el.style.transform = `translate3d(0,${((1 - a) * 14).toFixed(1)}px,0)`; });
+    if (k !== on) { on = k; pips.forEach((p, i) => p.classList.toggle('on', i === k)); }
+    sc.story(P); sc.paint();
+  };
+  const loop = (now) => { raf = 0; if (!vis) return; raf = requestAnimationFrame(loop); const dt = Math.min(.05, (now - last) / 1000); last = now; sc.advance(dt); update(); };
+  const io = new IntersectionObserver((e) => { vis = e[0].isIntersecting; if (vis && !raf && !reduced) { last = performance.now(); raf = requestAnimationFrame(loop); } }, { rootMargin: '10% 0px' });
+  new ResizeObserver(update).observe(c); io.observe(c); update();
 }
 function deadZone(sec, src) {
   const c = $('.dzc', sec), x = c.getContext('2d'), steps = $$('.dzst li', sec), read = $('.o2r', sec), fill = $('.o2rail i', sec), trk = $('.hold', sec);
@@ -355,7 +374,7 @@ function makeRide(n) {
     });
   }
   /* Held screens are built ahead of time, in idle moments, so nothing is built mid-scroll. */
-  function mk(k) { const id = STOPS[k].id; if (!FX[id]) FX[id] = RIDE[id].pin === 'dz' ? (deadZone(secs[k]), 1) : machineStage(secs[k], id) || 1; }
+  function mk(k) { const id = STOPS[k].id; if (!FX[id]) FX[id] = RIDE[id].pin === 'dz' ? (deadZone(secs[k]), 1) : RIDE[id].pin === 'hm' ? (hmStory(secs[k]), 1) : machineStage(secs[k], id) || 1; }
   const idle = window.requestIdleCallback || ((f) => setTimeout(f, 200));
   let pre = false; const prebuild = () => { if (pre) return; pre = true; const ks = STOPS.map((s, k) => (RIDE[s.id].pin ? k : -1)).filter((k) => k >= 0); const next = () => { const k = ks.shift(); if (k === undefined || !live) { pre = !!ks.length ? false : pre; return; } mk(k); idle(next, { timeout: 1200 }); }; idle(next, { timeout: 1200 }); };
   const onScroll = () => { if (!raf) raf = requestAnimationFrame(tick); };
@@ -367,7 +386,6 @@ function makeRide(n) {
   return {
     on() {
       if (live) return; live = true; rails = $$('.hd .rs'); railBox = $('.hd .rail'); railOff = null; lastOn = -2;
-      RIDE.harbormaster.after(byId('harbormaster'));
       addEventListener('scroll', onScroll, { passive: true }); ro.observe(ride);
       secs.forEach((s) => { if (!s.classList.contains('seen')) io.observe(s); });
       layout(); setTimeout(prebuild, 900);
@@ -398,7 +416,7 @@ const PK_VIS = (s, i) => {
   const V = RIDE[s.id];
   if (V.pin === 'dz') return `<canvas class="dzc" aria-hidden="true"></canvas><i class="dzsh" aria-hidden="true"></i><aside class="o2" aria-hidden="true"><p class="o2r">~7 mg/L</p><p class="o2h">Oxygen in the water<br><em>Illustration</em></p><div class="o2rail"><i></i></div></aside><ol class="dzst">${DZSTEPS.map(li).join('')}</ol>`;
   if (V.pin === 'ex') return FIG(i, s);
-  if (s.id === 'harbormaster') return '<div class="fit" inert aria-hidden="true"><div class="wid"></div></div>';
+  if (V.pin === 'hm') return `<canvas class="hmc" role="img" aria-label="${HMPIC}"></canvas><ol class="hmst">${HM.story.map(li).join('')}</ol>`;
   if (s.id === 'log') return `<div class="pk-photos">${C.log.photos.map((p, k) => `<a href="#log" data-k="${k}">${thumb(p.src, p.alt)}</a>`).join('')}<a class="pk-more" href="#log">All photos<span aria-hidden="true">→</span></a></div>`;
   if (s.id === 'crew') return `<ul class="roster">${PEOPLE.map((p, k) => `<li><a href="#crew" data-k="${k}">${thumb(p.photo.src, p.photo.alt)}<b>${p.name}</b><span>${p.role}</span></a></li>`).join('')}</ul>`;
   if (s.id === 'contact') return `<div class="legal">${BACKED}<p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>`;
@@ -433,13 +451,13 @@ function makePocket(n) {
   const name = (i) => i <= 0 ? 'Map' : STOPS[i - 1].name;
   const go = (i, now) => { i = Math.max(0, Math.min(N - 1, i)); deck.scrollTo({ left: i * deck.clientWidth, behavior: now || reduced ? 'auto' : 'smooth' }); if (now) setCur(i); };
   /* Stations play on their own when you arrive: the Bay runs its dead zone, the machines come apart. */
-  const p14 = () => (cur === 3 ? clamp01((performance.now() - t0) / 15000) : 0);
+  const p14 = () => (cur === 3 ? clamp01((performance.now() - t0) / 15000) : 0), HMI = STOPS.findIndex((s) => s.id === 'harbormaster') + 1, pHM = () => (cur === HMI ? clamp01((performance.now() - t0) / 21000) : 0);
   function build() {
     if (built) return; built = true;
     const bay = cards[3]; deadZone(bay, () => (QA && /[?&]dz=/.test(location.search) ? +/[?&]dz=([\d.]+)/.exec(location.search)[1] : reduced ? .95 : p14()));
+    hmStory(cards[HMI], pHM);
     let k = 0; ['rover', 'swarm', 'overhead'].forEach((id) => setTimeout(() => { if (!ST[id]) ST[id] = machineStage(cards[STOPS.findIndex((s) => s.id === id) + 1], id); }, 120 + 260 * k++));
   }
-  const fit = () => { const f = $('.pk-harbormaster .fit', n), w = f && $('.wid', f); if (!w || !w.firstElementChild) return; w.style.transform = ''; const s = Math.min(1, f.clientHeight / Math.max(1, w.scrollHeight), f.clientWidth / Math.max(1, w.scrollWidth)); w.style.transform = `scale(${s.toFixed(3)})`; };
   function loop() {
     drive = 0; if (!live) return;
     const s = cur > 0 ? STOPS[cur - 1].id : '', st = ST[s];
@@ -457,15 +475,14 @@ function makePocket(n) {
     $('b', next).textContent = i < N - 1 ? (i === 0 ? 'Ride the line' : 'Next: ' + name(i + 1)) : 'Back to the map';
     const c = cards[i]; c.classList.add('seen');
     if (!fx[i]) { fx[i] = 1; $$('dt[data-n]', c).forEach((d) => { const v = +d.dataset.n, s = performance.now(); if (!v || reduced || QA) return; const step = (t) => { const k = Math.min(1, (t - s) / 1200); d.textContent = Math.round(v * (1 - Math.pow(1 - k, 3))).toLocaleString('en-US'); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }); }
-    if (STOPS[i - 1] && STOPS[i - 1].id === 'harbormaster') requestAnimationFrame(fit);
     if (!drive) drive = requestAnimationFrame(loop);
   }
   const onScroll = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; const W = deck.clientWidth || 1, x = deck.scrollLeft, f = x / Math.max(1, deck.scrollWidth - W); train.style.transform = `translate3d(${(f * strip.clientWidth).toFixed(1)}px,0,0)`; setCur(Math.round(x / W)); }); };
   n.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { go(+b.dataset.go); return; } if (e.target.closest('.pk-prev')) go(cur - 1); else if (e.target.closest('.pk-next')) go(cur < N - 1 ? cur + 1 : 0); });
   deck.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { e.preventDefault(); go(cur + 1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur - 1); } });
-  const ro = new ResizeObserver(() => { room(); if (cur >= 0) deck.scrollLeft = cur * deck.clientWidth; onScroll(); fit(); });
+  const ro = new ResizeObserver(() => { room(); if (cur >= 0) deck.scrollLeft = cur * deck.clientWidth; onScroll(); });
   return {
-    on() { if (live) return; live = true; RIDE.harbormaster.after(cards[STOPS.findIndex((s) => s.id === 'harbormaster') + 1]); deck.addEventListener('scroll', onScroll, { passive: true }); ro.observe(deck); if (cur < 0) setCur(0); else { const i = cur; cur = -1; setCur(i); } onScroll(); (window.requestIdleCallback || setTimeout)(build); },
+    on() { if (live) return; live = true; deck.addEventListener('scroll', onScroll, { passive: true }); ro.observe(deck); if (cur < 0) setCur(0); else { const i = cur; cur = -1; setCur(i); } onScroll(); (window.requestIdleCallback || setTimeout)(build); },
     off() { live = false; deck.removeEventListener('scroll', onScroll); ro.disconnect(); cancelAnimationFrame(raf); cancelAnimationFrame(drive); raf = drive = 0; },
     inRide() { return cur > 0; },
     jump(id, slide) { const i = STOPS.findIndex((s) => s.id === id) + 1; if (i < 1) return false; $('#app').scrollIntoView(); if ((slide === 'in' || slide === 'ride') && !reduced && i > 1) { go(i - 1, true); requestAnimationFrame(() => requestAnimationFrame(() => go(i))); } else go(i, true); return true; },

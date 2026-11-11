@@ -18,21 +18,13 @@
 .bdw-fleet{padding:clamp(16px,2vw,24px)}.bdw-fleet__top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--bd-rule,rgba(236,230,217,.2))}
 .bdw-fleet__sliders{display:flex;flex-wrap:wrap;gap:18px;padding:16px 0}.bdw-slider{flex:1 1 200px;display:grid;gap:7px}.bdw-slider .bdw-label{display:flex;justify-content:space-between}.bdw-slider input{width:100%;accent-color:var(--bd-accent,#f5b800);height:24px}
 .bdw-board__bar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bd-rule,rgba(236,230,217,.2));font:500 12px/1.5 var(--bd-font-mono,monospace);letter-spacing:.06em;text-transform:uppercase;color:var(--bd-dim,#a8a396)}.bdw-board__bar b{color:var(--bd-accent,#f5b800);font-weight:500;margin-left:8px}
-.bdw-board{container-type:inline-size}.bdw-board__map canvas{height:280px}
-.bdw-board__list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--bd-rule,rgba(236,230,217,.2));border-block:1px solid var(--bd-rule,rgba(236,230,217,.2))}
-.bdw-ac{display:flex;align-items:center;gap:10px;min-width:0;padding:9px 14px;background:var(--bd-panel,var(--bd-bg,#0a0c0a));font:500 14px/1.25 var(--bd-font-body,system-ui,sans-serif)}.bdw-ac>span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bdw-dot{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;font-style:normal;background:conic-gradient(var(--bd-water,#6fd6c6) calc(var(--lv,0)*1turn),rgba(128,128,128,.3) 0)}
-.bdw-dot b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--bd-fg,#ece6d9);color:var(--bd-panel,#0a0c0a);font:800 12px/1 var(--bd-font-body,system-ui,sans-serif);box-shadow:0 0 0 2px var(--bd-panel,#0a0c0a)}
-.bdw-ac.is-lost{color:var(--bd-ember,#ff5a1f)}.bdw-ac:is(.is-lost,.is-down) .bdw-dot{background:none}.bdw-ac.is-lost .bdw-dot b{background:none;color:inherit;box-shadow:none;outline:2px dashed currentColor;outline-offset:-1px}
-.bdw-ac.is-down{color:var(--bd-dim,#a8a396)}.bdw-ac.is-down .bdw-dot b{background:none;color:inherit;box-shadow:inset 0 0 0 1.5px currentColor}
-.bdw-board__foot{display:grid;gap:10px;padding:14px 16px 16px}.bdw-say{margin:0;min-height:2.8em;font:500 15px/1.4 var(--bd-font-body,system-ui,sans-serif)}.bdw-board__foot .bdw-log{margin:0;min-height:1.5em}
+.bdw-board__bar b{margin-left:0}.bdw-board__map canvas{height:340px}
+.bdw-board__foot{display:grid;gap:12px;padding:14px 16px 16px;border-top:1px solid var(--bd-rule,rgba(236,230,217,.2))}.bdw-say{margin:0;min-height:2.8em;font:500 15px/1.4 var(--bd-font-body,system-ui,sans-serif)}
 .bdw-btn--quiet{border-color:transparent;text-decoration:underline;text-underline-offset:.25em}
-.bdw-sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-@container (max-width:560px){.bdw-board__list{grid-template-columns:repeat(2,minmax(0,1fr))}.bdw-ac{padding-inline:12px;gap:8px}.bdw-say{min-height:5.6em}}
 .bdw-lock{padding:clamp(16px,2vw,24px);display:flex;flex-wrap:wrap;gap:24px}.bdw-lock__btns{flex:1 1 240px;min-width:0;display:grid;gap:8px;align-content:start}.bdw-lock__state{flex:1.3 1 300px;min-width:0}
 .bdw-lock__big{font:800 clamp(52px,7vw,92px)/1 var(--bd-font-display,sans-serif);color:var(--bd-ember,#ff5a1f);margin:2px 0 10px}.bdw-lock__big.is-on{color:var(--bd-water,#6fd6c6)}
 .bdw-lock__row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--bd-rule,rgba(236,230,217,.2));font:500 13px/1.5 var(--bd-font-mono,monospace)}.bdw-lock__row .is-bad{color:var(--bd-ember,#ff5a1f)}.bdw-lock__row .is-accent{color:var(--bd-accent,#f5b800)}.bdw-lock .bdw-log{margin-top:12px}
-@media(max-width:620px){.bdw-board__map canvas{height:210px}}
+@media(max-width:620px){.bdw-board__map canvas{height:260px}.bdw-say{min-height:5.6em}}
 
 /* Backed by line on the metro pages */
 .bdk{margin:0;line-height:1.3}
