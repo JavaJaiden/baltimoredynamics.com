@@ -214,19 +214,17 @@ html.qa .pic img{animation:none!important}
 [data-hm] :is(.bdw-label,.bdw-legend,.bdw-board__bar,.bdw-tag,.bdw-btn,.bdw-tag--sim){letter-spacing:0;text-transform:none;font-size:14px;font-weight:600}
 [data-hm] .bdw-tag--sim{background:var(--fg);color:#000;padding:.25em .55em;border:0;font-size:12.5px}
 [data-hm] .bdw-board__bar b{color:var(--fg)}
-[data-hm] .bdw-board__rh{display:grid;grid-template-columns:34px 1fr 42px;gap:6px}[data-hm] .bdw-board__rh span:last-child{text-align:right}
-[data-hm] .bdw-board__row{font-size:14.5px;font-weight:400;font-variant-numeric:tabular-nums}
-[data-hm] .bdw-board__row.is-lost{color:var(--h);font-weight:600}
-[data-hm] .bdw-board__map canvas{height:min(40svh,430px)}
+[data-hm] .bdw-ac{font-size:14.5px}[data-hm] .bdw-ac.is-lost{font-weight:600}
+[data-hm] .bdw-board__map canvas{height:clamp(210px,32svh,300px)}
 [data-hm] .wid{padding-bottom:0}[data-hm] .bdw-fine{margin-top:2px}
-[data-hm] .bdw-board__rel b{font:900 24px/1 var(--dot);color:var(--led)}
 [data-hm] .bdw-big{font:900 clamp(56px,6vw,104px)/.95 var(--dot);color:var(--led)}
 [data-hm] .bdw-lock__big{font:900 clamp(60px,7vw,120px)/.95 var(--dot);color:var(--h)}[data-hm] .bdw-lock__big.is-on{color:var(--n)}
 [data-hm] .bdw-btn{border:2px solid var(--fg);border-radius:2px;font-size:15px}
 [data-hm] .bdw-btn:hover:not(:disabled){background:var(--fg);color:#000;border-color:var(--fg)}
 [data-hm] .bdw-btn--primary{background:var(--fg);color:#000}
 [data-hm] :is(.bdw-log,.bdw-fine,.bdw-lock__row){font-family:var(--sans)}
-[data-hm] .bdw-board__rel b{margin-left:.45em}
+[data-hm] .bdw-btn--quiet,[data-hm] .bdw-btn--quiet:hover:not(:disabled){border-color:transparent;background:none;color:var(--fg);padding-inline:8px}
+[data-hm] .bdw-say{font-size:16px}[data-hm] .bdw-board__foot .bdw-log{font-size:14px}
 [data-hm] .bdw-btn:focus-visible{outline:3px solid var(--r);outline-offset:3px}
 [data-hm] .bdw-lock__state .bdw-log{min-height:4.6em}
 [data-hm] .bdw-lock__row .is-bad{color:var(--h)}[data-hm] .bdw-lock__row .is-accent{color:var(--r)}
@@ -471,7 +469,7 @@ html.rm .rd.dz .pin{min-height:120svh}html.rm .dzst li{opacity:1!important;trans
 .pk-harbormaster .fit{pointer-events:none}
 /* On the phone card the board is a picture of itself: the map and who is where, at a size you can read. The controls live on its stop. */
 .pk-harbormaster :is(.bdw-board__foot,.bdw-board__bar){display:none}.pk-harbormaster .bdw-board__map canvas{height:min(27svh,230px)}
-.pk-harbormaster .bdw-board__row{padding-block:2px}.pk-harbormaster .bdw-board__rel{margin-top:6px}
+.pk-harbormaster .bdw-ac{padding-block:6px}.pk-harbormaster .bdw-board__list{border-bottom:0}
 .cv .pano,.cv .pic,.cv .stg{height:100%}
 .pk-boat .cv .pic img{animation:float 7s ease-in-out infinite}
 .pk-nav{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;height:58px;padding:0 var(--gut);border-top:1px solid var(--rule)}
@@ -577,7 +575,6 @@ html.on-stop{overscroll-behavior-y:contain}
 .o2rail span{line-height:1.25;text-align:right}
 .sub.after{margin-top:clamp(16px,2.4vh,26px)}
 .steps li b{font-weight:600}
-[data-hm] .bdw-board__rh,[data-hm] .bdw-board__row{grid-template-columns:62px 1fr 48px}
 /* The way to reach us */
 .mail{display:grid;gap:4px;margin:clamp(14px,2.4vh,26px) 0}
 .mail span{font-weight:600;font-size:14px;color:var(--dim)}
@@ -619,7 +616,8 @@ html.rm .card.dz .dzst li{font-size:14.5px;margin-top:8px}
   .card.dz .dzc{flex-basis:50%;height:50%}.card.dz .dzst li{font-size:14px;line-height:1.3}
   .card .roster{grid-template-columns:1fr 1fr}
   .pk-photos{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .pk-harbormaster .bdw-board__map canvas{height:min(34svh,160px)}
+  /* sideways there is room for the picture or the list, and the picture says more */
+  .pk-harbormaster .bdw-board__map canvas{height:min(58svh,240px)}.pk-harbormaster .bdw-board__list{display:none}
   .band{position:static}
   /* the whole width is used, and the first card gives most of it to the twelve stops, whose names may run to two lines */
   .homev.pk .pk{width:auto;margin-inline:0}
