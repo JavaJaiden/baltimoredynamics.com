@@ -44,9 +44,9 @@ function fleet(root, o) {
 /* Harbormaster board: canvas map plus roster with the reservation-hold rule. */
 const OUT = 24, SPRAY = 12, BACK = 24, SVC = 90, SPEED = 6;
 const STATIONS = [{ x: 0.17, y: 0.72, name: "S1" }, { x: 0.3, y: 0.24, name: "S2" }], FIRE = { x: 0.66, y: 0.42 };
-const NAMES = { out: "Outbound", spray: "Applying", back: "Returning", queue: "Waiting", refill: "Refilling", lost: "Link lost", grounded: "Grounded" };
+const NAMES = { out: "Flying out", spray: "Spraying", back: "Flying back", queue: "Waiting", refill: "Refilling", lost: "Link lost", grounded: "Landed" };
 const ease = (t) => { const k = Math.max(0, Math.min(1, t)); return k * k * (3 - 2 * k); };
-function fresh() { return { units: [0, 1, 2, 3, 4, 5].map((i) => ({ id: "A" + (i + 1), phase: "out", t: -i * 4, home: i % 2, tank: 1, x: 0, y: 0 })), busy: [null, null], held: [null, null], litres: 0, log: ["Board live. 6 aircraft, 2 refill stations."] }; }
+function fresh() { return { units: [0, 1, 2, 3, 4, 5].map((i) => ({ id: "A" + (i + 1), phase: "out", t: -i * 4, home: i % 2, tank: 1, x: 0, y: 0 })), busy: [null, null], held: [null, null], litres: 0, log: ["Running. 6 aircraft, 2 refill stations, 1 fire."] }; }
 const say = (s, m) => { s.log.unshift(m); s.log.length = Math.min(s.log.length, 6); };
 function stepBoard(s, dt) {
   s.units.forEach((u, i) => {
@@ -54,7 +54,7 @@ function stepBoard(s, dt) {
     if (u.phase === "out" && u.t >= OUT) { u.phase = "spray"; u.t = 0; }
     else if (u.phase === "spray") { u.tank = Math.max(0, 1 - u.t / SPRAY); s.litres += dt * FLOW; if (u.t >= SPRAY) { u.phase = "back"; u.t = 0; u.tank = 0; } }
     else if (u.phase === "back" && u.t >= BACK) { u.phase = "queue"; u.t = 0; }
-    else if (u.phase === "queue") { const free = [0, 1].find((k) => !s.busy[k] && !s.held[k]); if (free !== undefined) { s.busy[free] = u.id; u.home = free; u.phase = "refill"; u.t = 0; say(s, u.id + " assigned to " + STATIONS[free].name + "."); } }
+    else if (u.phase === "queue") { const free = [0, 1].find((k) => !s.busy[k] && !s.held[k]); if (free !== undefined) { s.busy[free] = u.id; u.home = free; u.phase = "refill"; u.t = 0; say(s, u.id + " sent to refill at " + STATIONS[free].name + "."); } }
     else if (u.phase === "refill") { u.tank = Math.min(1, u.t / SVC); if (u.t >= SVC) { u.phase = "out"; u.t = 0; u.tank = 1; s.busy[u.home] = null; } }
     const h = STATIONS[u.home], a = (i / 6) * Math.PI * 2, tx = FIRE.x + Math.cos(a) * 0.055, ty = FIRE.y + Math.sin(a) * 0.075;
     if (u.phase === "out") { const k = ease(u.t / OUT); u.x = h.x + (tx - h.x) * k; u.y = h.y + (ty - h.y) * k; } else if (u.phase === "spray") { u.x = tx; u.y = ty; } else if (u.phase === "back") { const k = ease(u.t / BACK); u.x = tx + (h.x - tx) * k; u.y = ty + (h.y - ty) * k; } else { u.x = h.x + Math.cos(a) * 0.02; u.y = h.y + Math.sin(a) * 0.03; }
@@ -68,26 +68,26 @@ function drawBoard(c, s, t, P) {
   const px = (u) => u.x * w, py = (u) => u.y * h;
   x.setLineDash([3, 5]); x.strokeStyle = P.accent; x.globalAlpha = 0.55; STATIONS.forEach((st) => { x.beginPath(); x.moveTo(px(st), py(st)); x.lineTo(px(FIRE), py(FIRE)); x.stroke(); }); x.setLineDash([]); x.globalAlpha = 1;
   const pulse = (Math.sin(t * 3) + 1) / 2; x.strokeStyle = P.ember; [0.09, 0.13 + pulse * 0.02].forEach((r, i) => { x.globalAlpha = i ? 0.45 : 1; x.beginPath(); x.ellipse(px(FIRE), py(FIRE), r * w * 0.8, r * h, 0, 0, 7); x.stroke(); }); x.globalAlpha = 1; x.fillStyle = P.ember; x.beginPath(); x.arc(px(FIRE), py(FIRE), 4 + pulse * 2, 0, 7); x.fill();
-  x.font = "12px " + P.mono; x.textBaseline = "middle";
+  x.font = "12px " + P.mono; x.textBaseline = "middle"; x.fillText("Fire", px(FIRE) - x.measureText("Fire").width / 2, py(FIRE) + 0.13 * h + 16);
   const placed = [], lab = (txt, lx, ly) => { const tw = x.measureText(txt).width; let yy = ly, n = 0; while (n++ < 7 && placed.some((r) => lx < r[0] + r[2] + 4 && lx + tw + 4 > r[0] && Math.abs(yy - r[1]) < 13)) yy += 13; placed.push([lx, yy, tw]); x.fillText(txt, lx, yy); };
-  STATIONS.forEach((st, i) => { const on = s.held[i], C = on ? P.ember : P.accent; x.strokeStyle = C; x.globalAlpha = 0.2; x.fillStyle = C; x.fillRect(px(st) - 11, py(st) - 11, 22, 22); x.globalAlpha = 1; x.strokeRect(px(st) - 11, py(st) - 11, 22, 22); lab(st.name + (on ? " HELD" : ""), px(st) + 16, py(st)); });
+  STATIONS.forEach((st, i) => { const on = s.held[i], C = on ? P.ember : P.accent; x.strokeStyle = C; x.globalAlpha = 0.2; x.fillStyle = C; x.fillRect(px(st) - 11, py(st) - 11, 22, 22); x.globalAlpha = 1; x.strokeRect(px(st) - 11, py(st) - 11, 22, 22); lab("Refill " + st.name + (on ? " HELD" : ""), px(st) + 16, py(st)); });
   s.units.forEach((u) => { if (u.phase === "grounded") return; const lost = u.phase === "lost", X = px(u), Y = py(u); x.strokeStyle = lost ? P.ember : P.accent; x.lineWidth = 1.6; x.beginPath(); x.moveTo(X - 6, Y - 6); x.lineTo(X + 6, Y + 6); x.moveTo(X + 6, Y - 6); x.lineTo(X - 6, Y + 6); x.stroke(); x.lineWidth = 1; [[-6, -6], [6, 6], [6, -6], [-6, 6]].forEach((o) => { x.beginPath(); x.arc(X + o[0], Y + o[1], 3, 0, 7); x.stroke(); }); x.fillStyle = lost ? P.ember : P.fg; lab(u.id, X + 12, Y - 8); if (u.phase === "spray") { x.strokeStyle = P.water; x.beginPath(); x.moveTo(X, Y); x.lineTo(px(FIRE), py(FIRE)); x.stroke(); } });
 }
 function board(root, o) {
   o = o || {}; root.classList.add("bdw", "bdw-board"); let s = fresh();
-  root.innerHTML = `<div class="bdw-board__bar"><span>Harbormaster board <b>Sector: Demo</b></span><span class="bdw-tag--sim">Illustrative scenario, time ×${SPEED}</span></div>
-  <div class="bdw-board__main"><div class="bdw-board__map"><canvas role="img" aria-label="Map of aircraft moving between two refill stations and a fire"></canvas></div><div class="bdw-board__roster"><div class="bdw-label bdw-board__rh"><span>Unit</span><span>State</span><span>Tank</span></div><div data-rows></div><div class="bdw-label bdw-board__rel">Released <b data-rel></b></div></div></div>
-  <div class="bdw-board__foot"><div class="bdw-btns"><button type="button" class="bdw-btn bdw-btn--primary" data-drop>Drop an aircraft's link</button><button type="button" class="bdw-btn" data-confirm disabled>Confirm it's grounded</button><button type="button" class="bdw-btn" data-reset>Reset</button></div><div class="bdw-log" data-log aria-live="polite"></div></div>`;
+  root.innerHTML = `<div class="bdw-board__bar"><span>Harbormaster <b>Practice run</b></span><span class="bdw-tag--sim">Illustrative scenario, time ×${SPEED}</span></div>
+  <div class="bdw-board__main"><div class="bdw-board__map"><canvas role="img" aria-label="Map of aircraft moving between two refill stations and a fire"></canvas></div><div class="bdw-board__roster"><div class="bdw-label bdw-board__rh"><span>Aircraft</span><span>Doing</span><span>Water</span></div><div data-rows></div><div class="bdw-label bdw-board__rel">Water delivered <b data-rel></b></div></div></div>
+  <div class="bdw-board__foot"><div class="bdw-btns"><button type="button" class="bdw-btn bdw-btn--primary" data-drop>Cut an aircraft's radio link</button><button type="button" class="bdw-btn" data-confirm disabled>Confirm it has landed</button><button type="button" class="bdw-btn" data-reset>Start over</button></div><div class="bdw-log" data-log aria-live="polite"></div></div>`;
   const c = root.querySelector("canvas"), q = (x) => root.querySelector(x), rows = q("[data-rows]"), P = palette(root);
   const dom = () => {
     rows.innerHTML = s.units.map((u) => `<div class="bdw-board__row${u.phase === "lost" ? " is-lost" : ""}"><span>${u.id}</span><span>${NAMES[u.phase]}</span><span>${Math.round(u.tank * 100)}%</span></div>`).join("");
     q("[data-rel]").textContent = s.litres.toFixed(0) + " L"; q("[data-log]").innerHTML = s.log.slice(0, 3).map((m, i) => `<div class="${i ? "" : "is-new"}">${m}</div>`).join("");
     const lost = s.units.find((u) => u.phase === "lost"); q("[data-drop]").disabled = !!lost; q("[data-confirm]").disabled = !lost; q("[data-confirm]").classList.toggle("bdw-btn--primary", !!lost); q("[data-drop]").classList.toggle("bdw-btn--primary", !lost);
   };
-  const warm = () => { stepBoard(s, 0.01); for (let i = 0; i < 300; i++) stepBoard(s, 0.4); s.log = ["Board live. 6 aircraft, 2 refill stations."]; };
+  const warm = () => { stepBoard(s, 0.01); for (let i = 0; i < 300; i++) stepBoard(s, 0.4); s.log = ["Running. 6 aircraft, 2 refill stations, 1 fire."]; };
   warm();
-  q("[data-drop]").onclick = () => { const u = s.units.find((k) => k.phase === "out" || k.phase === "spray" || k.phase === "back") || s.units.find((k) => k.phase === "refill" || k.phase === "queue"); if (!u) return; const st = u.home; if (s.busy[st] === u.id) s.busy[st] = null; u.phase = "lost"; u.t = 0; s.held[st] = u.id; say(s, u.id + " link lost. Zone and " + STATIONS[st].name + " stay reserved until someone confirms it's down."); dom(); };
-  q("[data-confirm]").onclick = () => { const lost = s.units.find((u) => u.phase === "lost"); if (!lost) return; lost.phase = "grounded"; const k = s.held.indexOf(lost.id); if (k >= 0) s.held[k] = null; say(s, lost.id + " confirmed on the ground by operator. Reservation released."); dom(); };
+  q("[data-drop]").onclick = () => { const u = s.units.find((k) => k.phase === "out" || k.phase === "spray" || k.phase === "back") || s.units.find((k) => k.phase === "refill" || k.phase === "queue"); if (!u) return; const st = u.home; if (s.busy[st] === u.id) s.busy[st] = null; u.phase = "lost"; u.t = 0; s.held[st] = u.id; say(s, u.id + " lost its radio link. Its area and " + STATIONS[st].name + " stay reserved until someone confirms it has landed."); dom(); };
+  q("[data-confirm]").onclick = () => { const lost = s.units.find((u) => u.phase === "lost"); if (!lost) return; lost.phase = "grounded"; const k = s.held.indexOf(lost.id); if (k >= 0) s.held[k] = null; say(s, lost.id + " confirmed landed by the operator. Its refill station is free again."); dom(); };
   q("[data-reset]").onclick = () => { s = fresh(); warm(); dom(); };
   dom(); drawBoard(c, s, 1, P);
   const api = { destroy() {} };

@@ -33,6 +33,7 @@ const paintBay = async (r) => {
 
 const row = (a, b) => `<li><b>${a}</b><span>${b}</span></li>`;
 const fine = (t) => (t ? `<p class="fine">${t}</p>` : '');
+const MAIL = C.contact.email ? `<p class="mail"><span>Email us</span><a href="mailto:${C.contact.email}">${C.contact.email}</a></p>` : '';
 const ext = (href, t) => `<a href="${href}" target="_blank" rel="noopener">${t}<span class="vh"> (opens in a new tab)</span></a>`;
 /* Entries from the timeline and rows from the status board, reused on the stops they belong to */
 const TL = (ks) => `<ul class="rows">${ks.map((k) => O.timeline[k]).map(([d, t, b]) => `<li><b>${t}</b><span>${d}. ${b}</span></li>`).join('')}</ul>`;
@@ -73,7 +74,7 @@ const STOPS = [
   ] },
   { id: 'bay', l: 'w', name: 'The Bay', place: ch[2].place, line: ch[2].title, tabs: [
     { t: 'Overview', left: sub(ch[2].body) + fine(ch[2].note), right: BAYPIC, after: paintBay },
-    { t: 'What a dead zone is', h: DZ.title, left: sub('Fertilizer and stormwater runoff feed algae blooms. When the algae die, bacteria use up the oxygen in the water and fish can\'t stay.'), right: `<dl class="big">${DZ.stats.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>` },
+    { t: 'What a dead zone is', h: DZ.title, left: sub(ch[2].def) + `<p class="lab noteh">How one forms</p><ol class="steps">${ch[2].forms.map(li).join('')}</ol><p class="sub after">${ch[2].unseen}</p>`, right: `<figure class="o2s" role="img" aria-label="Scale of oxygen in the water, from 0 to 8 milligrams per litre. Below 2 is a dead zone. Healthy water is about 7."><div class="o2s-bar"><i class="o2s-dead"></i><b class="o2s-mk" style="left:25%"></b><b class="o2s-mk ok" style="left:87.5%"></b></div><div class="o2s-lab"><p class="lo" style="left:0"><strong>Dead zone</strong>below 2&nbsp;mg/L</p><p class="ok" style="left:87.5%"><strong>Healthy water</strong>about 7&nbsp;mg/L</p></div><figcaption>Oxygen dissolved in the water, in milligrams per litre.</figcaption></figure><dl class="big">${DZ.stats.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>` },
     { t: 'What we built', h: 'What we built to find them.', left: sub('A boat that could hold its position against the current, sensors that didn\'t need a person standing over them, and a record that scientists could check.') + TL([2, 5]), right: pic(cut('pierStation-3q', 981, 1591, 'Rendering of the solar water station on a pier')) },
     { t: 'From the field', h: 'From the field.', left: TL([1]) + fine('<a href="#log">Open the field log</a>'), right: `<div class="duo">${pic(photo('jar', C.log.photos[2].alt), '', C.log.photos[2].cap)}${pic(photo('sensor', C.log.photos[4].alt), '', C.log.photos[4].cap)}</div>` },
   ] },
@@ -81,8 +82,8 @@ const STOPS = [
   machine('swarm', 'n', ch[4], cut('swarm-3q', 1749, 817, 'Rendering of a SWARM-N aircraft'), cut('swarm-top', 1755, 1589, 'Top view rendering of a SWARM-N aircraft'), cut('swarm-exploded', 1815, 1167, 'Exploded rendering of a SWARM-N aircraft'), [4, 5, 7]),
   machine('overhead', 'h', ch[5], cut('overhead-3q', 813, 1233, 'Rendering of OVERHEAD-H holding a hose'), cut('overhead-side', 795, 1451, 'Side view rendering of OVERHEAD-H with its hose'), cut('overhead-exploded', 817, 1401, 'Exploded rendering of OVERHEAD-H'), [3, 4, 5, 7]),
   { id: 'harbormaster', l: 't', all: 1, wide: 1, name: 'Harbormaster', place: 'Fleet software', line: HM.title, tabs: [
-    { t: 'What it is', left: sub(HM.plain) + `<p class="lab noteh">What it does</p><ul class="rows tight">${HM.does.map(li).join('')}</ul>${fine(HM.demoNote)}`, right: `<ul class="rules">${HM.pillars.map(([t, b]) => `<li><h3>${t}</h3><p>${b}</p></li>`).join('')}</ul>` },
-    { t: 'Try the board', h: 'What happens when an aircraft goes quiet.', left: sub(HM.board.body) + `<p class="lab noteh">Try it</p><ol class="steps">${HM.tryIt.map(li).join('')}</ol>`, right: '<div class="wid"></div>', after: widget('board') },
+    { t: 'What it is', left: sub(HM.plain) + `<p class="lab noteh">An example</p><ol class="steps">${HM.eg.map(li).join('')}</ol>${fine(HM.name + ' ' + HM.demoNote)}`, right: `<ul class="rules">${HM.pillars.map(([t, b]) => `<li><h3>${t}</h3><p>${b}</p></li>`).join('')}</ul>` },
+    { t: 'Try it', h: 'What happens when an aircraft goes quiet.', left: sub(HM.board.body) + `<p class="lab noteh">Try it</p><ol class="steps">${HM.tryIt.map((t) => li(`<span>${t}</span>`)).join('')}</ol>${fine(HM.look)}`, right: '<div class="wid"></div>', after: widget('board') },
     { t: 'Fleet size', h: HM.fleet.title, left: sub(HM.fleetPlain), right: '<div class="wid"></div>', after: widget('fleet') },
     { t: 'Water switch', h: HM.payload.title, left: sub(HM.switchPlain) + `<ul class="rows tight">${HM.switchRules.map(li).join('')}</ul>${fine('It runs here in the browser and isn\'t connected to any hardware.')}`, right: '<div class="wid"></div>', after: widget('interlock') },
   ] },
@@ -97,7 +98,7 @@ const STOPS = [
     { t: 'The story', h: 'The story.', left: `<div class="prose">${O.paras.map((p) => `<p>${p}</p>`).join('')}</div>`, right: pic(photo('flagwall', C.log.photos[5].alt), '', C.log.photos[5].cap) },
   ] },
   { id: 'log', l: 't', wide: 1, name: 'Field log', place: 'Real photographs', line: C.log.title, log: 1 },
-  { id: 'contact', l: 't', name: 'Contact', place: C.contact.place, line: C.contact.title, tabs: [{ t: 'Contact', left: sub(C.contact.body) + BACKEDX, right: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>` }] },
+  { id: 'contact', l: 't', name: 'Contact', place: C.contact.place, line: C.contact.title, tabs: [{ t: 'Contact', left: sub(C.contact.body) + MAIL + BACKEDX, right: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>` }] },
 ];
 const num = (i) => String(i + 1).padStart(2, '0');
 const hd = $('#hd'), view = $('#view'), root = document.documentElement;
@@ -140,24 +141,24 @@ const QA = root.classList.contains('qa');
 const narrow = () => innerWidth <= 860;
 
 /* The dead zone, as Noir drew it: runoff, bloom, die-off, the fish leave, then the boat comes to measure. */
-const DZSTEPS = ['Fertilizer and stormwater runoff feed algae blooms.', 'When the algae die, bacteria use up the oxygen in the water and fish can\'t stay.', 'Our first machines were built to find those places before they spread: a boat that could hold its position against the current, sensors that didn\'t need a person standing over them, and a record that scientists could check.'];
+const DZSTEPS = ['It starts on land. Fertilizer washes into the Bay and feeds algae.', 'When the algae die, bacteria use up the oxygen in the water. Fish and crabs leave or die. That water is now a dead zone.', 'From the surface it looks the same, so it has to be measured. Our first machines were built for that: a boat that could hold its position against the current and sensors that didn\'t need a person standing over them.'];
 const DZBG = '<canvas class="dzc" aria-hidden="true"></canvas><i class="dzsh" aria-hidden="true"></i>';
-const DZFG = `<ol class="dzst">${DZSTEPS.map(li).join('')}</ol><aside class="o2" aria-hidden="true"><p class="o2h">Dissolved oxygen<br><em>Illustration</em></p><p class="o2r">~7 mg/L</p><div class="o2rail"><i></i><span style="bottom:87.5%">~7 mg/L</span><span class="lo" style="bottom:25%">2 mg/L</span></div></aside>`;
+const DZFG = `<ol class="dzst">${DZSTEPS.map(li).join('')}</ol><aside class="o2" aria-hidden="true"><p class="o2h">Oxygen in the water<br><em>Illustration</em></p><p class="o2r">~7 mg/L</p><div class="o2rail"><i></i><span style="bottom:87.5%">Healthy water<br>~7&nbsp;mg/L</span><span class="lo" style="bottom:25%">Dead zone<br>below 2&nbsp;mg/L</span></div></aside>`;
 const FIG = (i, s) => `<div class="stg"><canvas aria-hidden="true"></canvas><svg class="lead" aria-hidden="true"></svg><div class="lead__labels" aria-hidden="true"></div><p class="vh">Exploded drawing of ${s.name}. A drawing: no hardware is shown. ${ch[i].label}.</p></div>`;
 
 const RIDE = {
   wheel: { html: WHEEL },
   boat: { html: pic(cut('yacht-3q', 1239, 1063, 'Rendering of the boat that became the floating workshop')), fl: 1, cta: 'More on the boat' },
-  bay: { pin: 'dz', cta: 'More on the Bay' },
+  bay: { pin: 'dz', cta: 'More on the Bay', extra: `<p class="sub def">${ch[2].def}</p>`, blurb: ch[2].def },
   rover: { pin: 'ex' },
   swarm: { pin: 'ex' },
   overhead: { pin: 'ex' },
-  harbormaster: { html: '<div class="wid"></div>', after: widget('board'), cta: 'See how Harbormaster works', extra: sub(HM.plain), blurb: HM.short },
+  harbormaster: { html: `<div class="wid"></div><p class="fine look">${HM.look}</p>`, after: widget('board'), cta: 'See how Harbormaster works', extra: sub(HM.plain), blurb: HM.short },
   status: { html: `<dl class="big four">${ST.stats.map(([a, b]) => `<div><dt data-n="${a.replace(/\D/g, '')}">${a}</dt><dd>${b}</dd></div>`).join('')}</dl>`, cta: 'See what exists today' },
   crew: { wide: 1, line: 'The people behind the work.', html: `<ul class="crw">${PEOPLE.map((p, k) => `<li><a href="#crew" data-k="${k}">${photo(p.photo.src, p.photo.alt)}<b>${p.name}</b><span>${p.role}</span></a></li>`).join('')}</ul>`, cta: 'Meet the crew' },
   origin: { wide: 1, html: `<ol class="otl">${O.timeline.map(([d, t]) => `<li><i></i><time>${d}</time><b>${t}</b></li>`).join('')}</ol>`, cta: 'Read the story' },
   log: { html: `<div class="mos">${C.log.photos.map((p, k) => `<a href="#log" data-k="${k}">${thumb(p.src, p.alt)}</a>`).join('')}</div>`, cta: 'Open the field log' },
-  contact: { extra: sub(C.contact.body) + BACKED, html: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>`, cta: false },
+  contact: { extra: sub(C.contact.body) + MAIL + BACKED, html: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>`, cta: false },
 };
 const bullets = (s) => (s.all ? ['w', 'r', 'n', 'h'] : s.l === 't' ? [] : [s.l]).map((b) => `<i class="bu ${b}">${b.toUpperCase()}</i>`).join('');
 const rideSec = (s, i) => {
@@ -371,7 +372,21 @@ function makeRide(n) {
       layout(); setTimeout(prebuild, 900);
     },
     off() { live = false; removeEventListener('scroll', onScroll); ro.disconnect(); io.disconnect(); cancelAnimationFrame(raf); raf = 0; },
-    jump(id, slide) { const el = document.getElementById('rd-' + id); if (!el) return false; el.classList.add('seen'); scrollTo({ top: el.getBoundingClientRect().top + scrollY - hd.offsetHeight, behavior: slide && !reduced ? 'smooth' : 'auto' }); if (slide) { el.tabIndex = -1; el.focus({ preventScroll: true }); } return true; },
+    /* slide: true slides from where you are. 'in' and 'ride' are arrivals from a stop's own page: you land a little above the stop
+       and it slides into place ('ride' also swallows what is left of the scroll that carried you here). */
+    jump(id, slide) {
+      const el = document.getElementById('rd-' + id); if (!el) return false; el.classList.add('seen');
+      const at = $('.hold', el) || el, top = () => Math.round(at.getBoundingClientRect().top + scrollY - hd.offsetHeight), arrive = (slide === 'in' || slide === 'ride') && !reduced;
+      if (arrive) {
+        const touch = matchMedia('(pointer: coarse)').matches, glide = () => scrollTo({ top: top(), behavior: 'smooth' });
+        scrollTo(0, Math.max(0, top() - Math.round(innerHeight * .62)));
+        n.classList.remove('arrive'); void n.offsetWidth; n.classList.add('arrive');
+        if (slide === 'ride' && touch) { root.style.overflow = 'hidden'; setTimeout(() => { root.style.overflow = ''; glide(); }, 300); }
+        else { if (slide === 'ride') { addEventListener('wheel', eat, { passive: false }); setTimeout(() => removeEventListener('wheel', eat), 760); } requestAnimationFrame(glide); }
+      } else scrollTo({ top: top(), behavior: slide && !reduced ? 'smooth' : 'auto' });
+      if (slide) { el.tabIndex = -1; el.focus({ preventScroll: true }); }
+      return true;
+    },
     inRide() { return ride.getBoundingClientRect().top < innerHeight * .5; },
     destroy() { this.off(); Object.values(FX).forEach((f) => f && f.gone && f.gone()); },
   };
@@ -380,7 +395,7 @@ function makeRide(n) {
 /* ---------- the phone version: the line is a deck you swipe through, one station per card ---------- */
 const PK_VIS = (s, i) => {
   const V = RIDE[s.id];
-  if (V.pin === 'dz') return `<canvas class="dzc" aria-hidden="true"></canvas><i class="dzsh" aria-hidden="true"></i><aside class="o2" aria-hidden="true"><p class="o2r">~7 mg/L</p><p class="o2h">Dissolved oxygen<br><em>Illustration</em></p><div class="o2rail"><i></i></div></aside><ol class="dzst">${DZSTEPS.map(li).join('')}</ol>`;
+  if (V.pin === 'dz') return `<canvas class="dzc" aria-hidden="true"></canvas><i class="dzsh" aria-hidden="true"></i><aside class="o2" aria-hidden="true"><p class="o2r">~7 mg/L</p><p class="o2h">Oxygen in the water<br><em>Illustration</em></p><div class="o2rail"><i></i></div></aside><ol class="dzst">${DZSTEPS.map(li).join('')}</ol>`;
   if (V.pin === 'ex') return FIG(i, s);
   if (s.id === 'harbormaster') return '<div class="fit" inert aria-hidden="true"><div class="wid"></div></div>';
   if (s.id === 'log') return `<div class="pk-photos">${C.log.photos.map((p, k) => `<a href="#log" data-k="${k}">${thumb(p.src, p.alt)}</a>`).join('')}<a class="pk-more" href="#log">All photos<span aria-hidden="true">→</span></a></div>`;
@@ -393,7 +408,7 @@ const pkCard = (s, i) => {
   return `<section class="card l-${s.l} pk-${s.id}${V.pin ? ' ' + V.pin : ''}" data-i="${i + 1}" aria-labelledby="pk-h-${s.id}"${s.id === 'harbormaster' ? ' data-hm' : ''}>
   <p class="kick">${bullets(s)}<span class="n">${num(i)}</span><span>${s.place}</span></p>
   <h2 id="pk-h-${s.id}">${s.name}</h2>
-  ${line ? `<p class="ln2">${line.replace(/(\w+-\w+)/g, '<span class="nw">$1</span>')}</p>` : ''}${s.id === 'contact' ? sub(C.contact.body) : ''}${V.blurb ? sub(V.blurb) : ''}
+  ${line ? `<p class="ln2">${line.replace(/(\w+-\w+)/g, '<span class="nw">$1</span>')}</p>` : ''}${s.id === 'contact' ? sub(C.contact.body) + MAIL : ''}${V.blurb ? sub(V.blurb) : ''}
   ${V.cta === false ? '' : `<a class="go" href="#${s.id}">${V.cta || `More on ${s.name}`}<span aria-hidden="true">→</span></a>`}
   <div class="cv">${PK_VIS(s, i)}</div></section>`;
 };
@@ -452,7 +467,7 @@ function makePocket(n) {
     on() { if (live) return; live = true; RIDE.harbormaster.after(cards[STOPS.findIndex((s) => s.id === 'harbormaster') + 1]); deck.addEventListener('scroll', onScroll, { passive: true }); ro.observe(deck); if (cur < 0) setCur(0); else { const i = cur; cur = -1; setCur(i); } onScroll(); (window.requestIdleCallback || setTimeout)(build); },
     off() { live = false; deck.removeEventListener('scroll', onScroll); ro.disconnect(); cancelAnimationFrame(raf); cancelAnimationFrame(drive); raf = drive = 0; },
     inRide() { return cur > 0; },
-    jump(id) { const i = STOPS.findIndex((s) => s.id === id) + 1; if (i < 1) return false; $('#app').scrollIntoView(); go(i, true); return true; },
+    jump(id, slide) { const i = STOPS.findIndex((s) => s.id === id) + 1; if (i < 1) return false; $('#app').scrollIntoView(); if ((slide === 'in' || slide === 'ride') && !reduced && i > 1) { go(i - 1, true); requestAnimationFrame(() => requestAnimationFrame(() => go(i))); } else go(i, true); return true; },
     destroy() { this.off(); Object.values(ST).forEach((s) => s && s.gone && s.gone()); },
   };
 }
@@ -502,8 +517,10 @@ const sections = (s) => (s.crew ? crewSecs() : s.log ? logSecs() : s.tabs);
 let pick = 0;
 document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[data-k]'); pick = a ? +a.dataset.k : 0; }, true);
 
-/* A stop is one page you read by scrolling. Past its last section a strip names the next stop; keep scrolling through it and you ride on. */
-let armed = false, riding = false, lockUntil = 0, stopRaf = 0;
+/* A stop is one page you read by scrolling. Past its last section a strip names the next stop on the line; keep scrolling through it
+   and you are back on the line, with that stop sliding into place. */
+let armed = false, riding = false, lockUntil = 0, stopRaf = 0, landOn = null, slideIn = false;
+const toLine = (id, slide) => { landOn = id || 'top'; slideIn = !!slide; location.hash = 'map'; };
 function stopScroll() {
   stopRaf = 0; if (cur < 0) return;
   if (scrollY > 0) topSince = 0; else if (!topSince) topSince = performance.now();
@@ -514,7 +531,7 @@ function stopScroll() {
   nu.style.setProperty('--k', k.toFixed(3));
   /* Only someone who scrolled down through the strip rides on: a jump straight to the bottom (the End key, a dragged scrollbar) does not */
   if (k < .02) armed = false; else if (k > .1 && k < .93) armed = true;
-  if (armed && !riding && performance.now() > lockUntil && max > 4 && y >= max - 1) { riding = true; armed = false; location.hash = nu.getAttribute('href').slice(1); }
+  if (armed && !riding && performance.now() > lockUntil && max > 4 && y >= max - 1) { riding = true; armed = false; toLine(nu.dataset.line, true); }
 }
 addEventListener('scroll', () => { if (cur >= 0 && !stopRaf) stopRaf = requestAnimationFrame(stopScroll); }, { passive: true });
 
@@ -524,12 +541,12 @@ const trail = [];                          /* the places visited this visit, in 
 let leaving = false, landAtEnd = false, upAcc = 0, upAt = 0, topSince = 0, pullT = 0, ty0 = null, pulled = false;
 const pull = document.createElement('div'); pull.className = 'pull'; pull.setAttribute('aria-hidden', 'true'); pull.innerHTML = '<span></span><i></i>'; document.body.append(pull);
 const showPull = (k) => { pull.style.setProperty('--k', clamp01(k).toFixed(3)); };
-const backKey = (i) => (trail.length > 1 ? trail[trail.length - 2] : i > 0 ? STOPS[i - 1].id : 'map');
+const backKey = () => (trail.length > 1 ? trail[trail.length - 2] : 'home');
 function goBack() {
   if (cur < 0 || leaving) return; leaving = true; landAtEnd = true; showPull(0);
   /* whatever is left of the scroll that asked to go back is swallowed, so the place you return to does not drift */
   addEventListener('wheel', eat, { passive: false }); setTimeout(() => removeEventListener('wheel', eat), 560);
-  if (trail.length > 1) history.back(); else location.hash = cur > 0 ? STOPS[cur - 1].id : 'map';
+  if (trail.length > 1) history.back(); else { landAtEnd = false; toLine(STOPS[cur].id); }
 }
 addEventListener('wheel', (e) => {
   if (cur < 0 || leaving) return;
@@ -558,19 +575,21 @@ function stop(i, dir) {
   hd.innerHTML = `<a class="brand" href="#map" aria-label="${C.brand.name}, back to the map">${C.brand.mark}<span>${C.brand.name}</span></a>${rail(i)}<span class="sp"></span><a class="lnk" href="#map">Map</a>`;
   const bullets = s.all ? ['w', 'r', 'n', 'h'] : s.l === 't' ? [] : [s.l];
   showHome(false); root.classList.add('on-stop');
-  { const b = STOPS.find((x) => x.id === backKey(i)); $('span', pull).textContent = b ? `Back to ${b.name}` : 'Back to the line'; showPull(0); upAcc = 0; topSince = performance.now(); }
+  { const b = STOPS.find((x) => x.id === backKey()); $('span', pull).textContent = b ? `Back to ${b.name}` : 'Back to the line'; showPull(0); upAcc = 0; topSince = performance.now(); }
   const jump = S.length > 1 ? `<nav class="tabs" aria-label="On this page">${S.map((x, k) => `<button type="button" class="tab" data-sec="${k}"${k ? '' : ' aria-current="true"'}>${x.t}</button>`).join('')}</nav>` : '';
   const sign = `<header class="sign"><p class="sp2">${bullets.map((b) => `<i class="bu ${b}">${b.toUpperCase()}</i>`).join('')}<span>${num(i)}</span>${s.place ? `<span class="pl">${s.place}</span>` : ''}${s.st ? tag(s.st) : ''}</p><h1>${s.name}</h1>${s.line ? `<p class="ln1">${s.line.replace(/(\w+-\w+)/g, '<span class="nw">$1</span>')}</p>` : ''}${jump}</header>`;
   const sec = (x, k) => `<section class="sec${k ? '' : ' first'}${x.right ? '' : ' solo'}${x.cls ? ' ' + x.cls : ''}" id="sec-${k}"${k ? ` aria-labelledby="sec-h-${k}"` : ''}>${k ? `<h2 class="sec-h" id="sec-h-${k}">${x.h || x.t}</h2>` : sign}${x.left ? `<div class="sec-b">${x.left}</div>` : ''}${x.right ? `<div class="sec-v">${x.right}</div>` : ''}</section>`;
   stopBox.innerHTML = `<article class="stop l-${s.l}${s.wide ? ' wide' : ''} ${dir < 0 ? 'bwd' : 'fwd'}" data-id="${s.id}"${s.id === 'harbormaster' ? ' data-hm' : ''}>${S.map(sec).join('')}
-    <a class="nextup l-${n ? n.l : 't'}" href="#${n ? n.id : 'map'}"><span class="nu-k">${n ? 'Next stop' : 'End of the line'}</span><span class="nu-n">${n ? `<i>${num(i + 1)}</i>${n.name}` : 'Back to the map'}</span>${n && n.line ? `<span class="nu-l">${n.line}</span>` : ''}<span class="nu-go" aria-hidden="true"><i></i>Keep scrolling</span></a>
+    <a class="nextup l-${n ? n.l : 't'}" href="#map" data-line="${n ? n.id : ''}" data-slide><span class="nu-k">${n ? 'Next on the line' : 'End of the line'}</span><span class="nu-n">${n ? `<i>${num(i + 1)}</i>${n.name}` : 'Back to the map'}</span>${n && n.line ? `<span class="nu-l">${n.line}</span>` : ''}<span class="nu-go" aria-hidden="true"><i></i>Keep scrolling</span></a>
   </article>
-  <nav class="band l-${s.l}" aria-label="Along the line"><a class="bd prev" href="#${p ? p.id : 'map'}"><span aria-hidden="true">←</span>${p ? p.name : 'Map'}</a><span class="trk" aria-hidden="true"><b></b></span><a class="bd next" href="#${n ? n.id : 'map'}">${n ? n.name : 'Map'}<span aria-hidden="true">→</span></a></nav>`;
+  <nav class="band l-${s.l}" aria-label="Along the line"><a class="bd prev" href="#map" data-line="${s.id}"><span aria-hidden="true">←</span>Back to the line</a><span class="trk" aria-hidden="true"><b></b></span><a class="bd next" href="#map" data-line="${n ? n.id : ''}" data-slide>${n ? n.name : 'Map'}<span aria-hidden="true">→</span></a></nav>`;
   S.forEach((x, k) => { if (x.after) x.after($(`#sec-${k} .sec-v`, stopBox), $(`#sec-${k} .sec-b`, stopBox)); });
   $$('.sec.first .sec-b, .sec.first .sec-v', stopBox).forEach(fresh);
   /* Jump links, and which section you are in */
   const tabs = $$('.tab', stopBox), secs = $$('.sec', stopBox);
-  stopBox.onclick = (e) => { const b = e.target.closest('[data-sec]'); if (b && secs[+b.dataset.sec]) secs[+b.dataset.sec].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); };
+  stopBox.onclick = (e) => {
+    const l = e.target.closest('[data-line]'); if (l && !(e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) { e.preventDefault(); toLine(l.dataset.line, l.hasAttribute('data-slide')); return; }
+    const b = e.target.closest('[data-sec]'); if (b && secs[+b.dataset.sec]) secs[+b.dataset.sec].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); };
   if (tabs.length && 'IntersectionObserver' in window) { const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) tabs.forEach((t, k) => { if (k === secs.indexOf(e.target)) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current'); }); }), { rootMargin: '-45% 0px -50% 0px' }); secs.forEach((x) => io.observe(x)); }
   document.title = `${s.name} · ${C.brand.name}`;
   view.focus({ preventScroll: true });
@@ -580,7 +599,6 @@ function stop(i, dir) {
   /* Arriving from a person or a photo on the home page opens on that one */
   if (pick > 0) { const t = s.crew ? secs[pick + 1] : s.log ? $('#ph-' + pick, stopBox) : null; pick = 0; if (t) requestAnimationFrame(() => t.scrollIntoView({ block: s.crew ? 'start' : 'center' })); }
   requestAnimationFrame(stopScroll);
-  if (n && n.tabs) { const m = /src="([^"]+)"/.exec(n.tabs[0].right || ''); if (m) new Image().src = m[1]; }
 }
 
 /* ---------- the anime film, at #anime ---------- */
@@ -648,9 +666,10 @@ function route() {
   if (h === 'map' || (!h && cur >= 0)) {
     if (!h) { try { history.replaceState(null, '', '#map'); } catch (e) {} }
     /* Back from a stop you reached from the line: land on that stop's screen, not the top. */
-    const ret = cur >= 0 && fromRide ? STOPS[cur].id : null;
+    const ret = landOn === 'top' ? null : landOn || (cur >= 0 && fromRide ? STOPS[cur].id : null), how = landOn && slideIn ? (riding ? 'ride' : 'in') : false;
+    landOn = null; slideIn = false; armed = false; riding = false;
     root.classList.add('bdi-off'); cur = -1; fromRide = false; goHome();
-    if (!(ret && HOME.r.jump(ret))) scrollTo(0, 0);
+    if (!(ret && HOME.r.jump(ret, how))) scrollTo(0, 0);
     return;
   }
   const wasOff = root.classList.contains('bdi-off'), back = cur >= 0 && fromRide && h === 'after-intro' ? STOPS[cur].id : null;
