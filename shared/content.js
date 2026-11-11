@@ -5,12 +5,12 @@ BD.content = {
   brand: { name: "Baltimore Dynamics", place: "Baltimore, Maryland", coords: "39.29°N 76.61°W", year: 2026,
     mark: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" aria-hidden="true"><path fill="currentColor" d="M0 0h6v10.3L0 8zM12 0h6v15l-6-2.3zM24 0h6v19.7l-6-2.4zM0 20l6 2.3V36H0zM12 24.7l6 2.3v9h-6zM24 29.3l6 2.4V36h-6z"/><path fill="currentColor" d="M6 10.3l6 2.4v12l-6-2.4zM18 15l6 2.3v12l-6-2.3zM30 19.7l6 2.3v12l-6-2.3z"/></svg>' },
   hero: { line1: "Machines for the worst", line2: "parts of a city.", altHeadline: "Fire above. Water below.",
-    lede: "We started on the water, working directly on Mr. Trash Wheel's mission to clean Baltimore Harbor and running autonomous hulls in the same water. Now we're building rovers for the pipes under the street and aircraft that put water on fires.",
+    lede: "We started on the water, running autonomous hulls in Baltimore Harbor and partnering with Mr. Trash Wheel to help give them their radar and sensors. Now we're building rovers for the pipes under the street and aircraft that put water on fires.",
     note: "", primary: "See the systems", secondary: "Talk to us" },
   /* The six chapters of the camera journey, in the order the client asked for. ids match world.chapter. */
   chapters: [
     { id: "wheel", n: 1, place: "Jones Falls outlet, Inner Harbor", kicker: "Where it starts", title: "Baltimore's best-known robot eats trash.",
-      body: "Mr. Trash Wheel works the mouth of the Jones Falls. We helped directly on its mission to clean the harbor, and it set the bar for what a machine can mean to this city." },
+      body: "Mr. Trash Wheel works the mouth of the Jones Falls and set the bar for what a machine can mean to this city. We're partnering with Mr. Trash Wheel to help give them their radar and sensors." },
     { id: "fells", n: 2, place: "Fells Point, Baltimore Harbor", kicker: "On the water", title: "Then we put our own machines on the water.",
       body: "Sophia Roberts-Weigert led the boat work. Mike Kardas ran the lab and put it on the water, on a boat that became our floating workshop. We rebuilt drones on the deck and ran autonomous hulls in Baltimore Harbor.",
       callouts: [
@@ -36,7 +36,7 @@ BD.content = {
   origin: { kicker: "Origin", title: "We learned autonomy on the Chesapeake.",
     paras: [
       "Baltimore Dynamics grew out of the Northrop Grumman Innovation Lab at the University of Maryland, a student lab with one standing question: where are the Bay's dead zones, and can a machine find them first?",
-      "Sophia Roberts-Weigert led the boat work. Mike Kardas ran the lab and put it on the water, on a boat that became our floating workshop. We rebuilt drones on the deck, ran autonomous hulls in Baltimore Harbor and worked directly on Mr. Trash Wheel's mission to clean it.",
+      "Sophia Roberts-Weigert led the boat work. Mike Kardas ran the lab and put it on the water, on a boat that became our floating workshop. We rebuilt drones on the deck and ran autonomous hulls in Baltimore Harbor. Now we're partnering with Mr. Trash Wheel to help give them their radar and sensors.",
       "Fires and failing pipes look nothing like a dead zone. The job underneath is the same: send a machine somewhere bad for people, bring it back and prove what it did.",
     ],
     photo: { src: "aesv", alt: "The AESV inflatable test hull on Baltimore Harbor with brick waterfront buildings behind it", cap: "AESV test hull, Baltimore Harbor, July 2024." },
@@ -53,7 +53,7 @@ BD.content = {
       ["2026", "Fire and pipe programs", "SWARM-N, OVERHEAD-H and the pipe rover move into digital design and simulation."],
       ["November 2026", "Baltimore Dynamics", "March Onwards becomes a company with one job: machines for the worst parts of a city."],
     ],
-    trashWheel: { title: "Mr. Trash Wheel", body: "Baltimore's best-known robot eats trash at the mouth of the Jones Falls. We helped directly on its mission to clean the harbor, and it set the bar for what a machine can mean to this city.",
+    trashWheel: { title: "Mr. Trash Wheel", body: "Baltimore's best-known robot eats trash at the mouth of the Jones Falls and set the bar for what a machine can mean to this city. We're partnering with Mr. Trash Wheel to help give them their radar and sensors.",
       photo: { src: "mtw", alt: "Mr. Trash Wheel, a water wheel trash interceptor with large googly eyes, at the Baltimore Inner Harbor", cap: "Mr. Trash Wheel, Inner Harbor. Photo: Matthew Bellemare, CC BY-SA 2.0.", href: "https://commons.wikimedia.org/wiki/File:Mr._Trash_Wheel_(27582099121).jpg" } } },
   systems: { kicker: "Systems", title: "Three machines. Two emergencies.",
     items: [

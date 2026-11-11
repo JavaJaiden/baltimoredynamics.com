@@ -13,7 +13,7 @@
       <div class="o11-fit">
       <div class="o11-wheel"><img class="o11-mirror" src="${CUT}" alt="" aria-hidden="true"><img class="o11-photo" src="${CUT}" width="1520" height="1040" alt="${ALT}" decoding="async"></div>
       <div class="o11-bar"><span class="o11-brand"><span class="o11-mark" aria-hidden="true">${O.mark}</span><span class="o11-name">${O.C.brand.name}</span></span><a class="o11-skip" href="#after-intro">Skip<span class="o11-skipx"> the intro</span></a></div>
-      <div class="o11-copy"><p class="o11-eye">Mr. Trash Wheel, Inner Harbor</p><h1>We started on the water.</h1><p class="o11-sub">We helped directly on Mr. Trash Wheel's mission to clean Baltimore Harbor.</p></div>
+      <div class="o11-copy"><p class="o11-eye">Mr. Trash Wheel, Inner Harbor</p><h1>We started on the water.</h1><p class="o11-sub">We're partnering with Mr. Trash Wheel to help give them their radar and sensors.</p></div>
       <div class="o11-lede">${O.BACKED}<p class="o11-note"><span class="o11-cue">Scroll</span></p></div>
       <span class="o11-phonecue"><span class="o11-cue">Scroll</span></span>
       </div>

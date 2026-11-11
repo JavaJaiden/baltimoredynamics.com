@@ -77,7 +77,6 @@ html[data-op="o11"]:not(.bdi-off):not(.o11-night) .o11-edge{display:block}
 @media (max-width:820px){.o11-phonecue{display:inline-flex}.o11-phonecue .o11-cue::after{height:14px}}
 @media (max-height:720px) and (min-width:821px){.o11-note{display:none}.o11-phonecue{display:inline-flex}}
 @media (max-height:520px){.o11-sub{display:none}.o11-eye{display:none}}
-@media (max-height:640px) and (max-width:820px) and (orientation:portrait){.o11-sub{display:none}}
 @media (max-width:372px){.o11-skipx{display:none}}
 
 /* No WebGL: gradients plus a flipped, softened copy of the photo as the reflection */
