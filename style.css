@@ -549,3 +549,9 @@ html.rm .card.dz .cv{overflow-y:auto}
 /* Harbormaster's first screen: the four rules sit beside the plain explanation */
 .stop[data-id=harbormaster] .sec.first .sec-v{align-self:center}
 .sec-b .steps li{font-size:clamp(16px,1.2vw,20px)}.sec-b .lab.noteh+.steps,.sec-b .lab.noteh+.rows{margin-top:10px}
+/* Scrolling up off the top of a stop: a small tab drops in under the header, fills as you keep going, then takes you back */
+.pull{position:fixed;left:50%;top:calc(var(--hd) + 10px);z-index:35;display:grid;gap:7px;justify-items:stretch;padding:9px 16px 10px;border-radius:20px;background:var(--fg);color:#000;font:600 14px/1.1 var(--sans);white-space:nowrap;pointer-events:none;opacity:min(1,calc(var(--k,0)*3));transform:translate3d(-50%,calc((var(--k,0) - 1)*16px),0)}
+.pull span::before{content:"\2191";margin-right:.5em}
+.pull i{position:relative;display:block;height:3px;background:rgba(0,0,0,.2);overflow:hidden}.pull i::after{content:"";position:absolute;inset:0;background:#000;transform-origin:0 50%;transform:scaleX(var(--k,0))}
+/* On a stop a pull down means "go back", so the browser's own pull-to-refresh stays out of the way */
+html.on-stop{overscroll-behavior-y:contain}

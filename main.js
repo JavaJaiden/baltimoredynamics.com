@@ -43,9 +43,9 @@ const MTW = 'https://www.mrtrashwheel.com/how-it-works';
 function machine(id, l, c, over, scene, exp, dep) {
   const m = sys(id), st = c.label;
   return { id, l, name: m.name, place: m.role, line: c.title, st, tabs: [
-    { t: 'Overview', left: sub(c.body) + fine(c.note), right: pic(over, st) },
-    { t: 'How it works', h: 'How it works.', left: `<ol class="steps">${m.steps.map(li).join('')}</ol>`, right: pic(scene, st) },
-    { t: 'Specs', h: 'The numbers so far.', left: `<table class="specs"><tbody>${m.specs.map(([a, b, t]) => `<tr><th scope="row">${a}</th><td>${b}</td><td>${tag(t)}</td></tr>`).join('')}</tbody></table><p class="lab noteh">Engineering note</p><p class="note">${m.body}</p>`, right: pic(exp, st) },
+    { t: 'Overview', left: sub(c.body) + fine(c.note), right: pic(over) },
+    { t: 'How it works', h: 'How it works.', left: `<ol class="steps">${m.steps.map(li).join('')}</ol>`, right: pic(scene) },
+    { t: 'Specs', h: 'The numbers so far.', left: `<table class="specs"><tbody>${m.specs.map(([a, b, t]) => `<tr><th scope="row">${a}</th><td>${b}</td><td>${tag(t)}</td></tr>`).join('')}</tbody></table><p class="lab noteh">Engineering note</p><p class="note">${m.body}</p>`, right: pic(exp) },
     { t: 'Still to prove', h: 'Still to prove.', left: sub(m.prove), right: DEP(dep) },
   ] };
 }
@@ -143,7 +143,7 @@ const narrow = () => innerWidth <= 860;
 const DZSTEPS = ['Fertilizer and stormwater runoff feed algae blooms.', 'When the algae die, bacteria use up the oxygen in the water and fish can\'t stay.', 'Our first machines were built to find those places before they spread: a boat that could hold its position against the current, sensors that didn\'t need a person standing over them, and a record that scientists could check.'];
 const DZBG = '<canvas class="dzc" aria-hidden="true"></canvas><i class="dzsh" aria-hidden="true"></i>';
 const DZFG = `<ol class="dzst">${DZSTEPS.map(li).join('')}</ol><aside class="o2" aria-hidden="true"><p class="o2h">Dissolved oxygen<br><em>Illustration</em></p><p class="o2r">~7 mg/L</p><div class="o2rail"><i></i><span style="bottom:87.5%">~7 mg/L</span><span class="lo" style="bottom:25%">2 mg/L</span></div></aside>`;
-const FIG = (i, s) => `<div class="stg"><canvas aria-hidden="true"></canvas><svg class="lead" aria-hidden="true"></svg><div class="lead__labels" aria-hidden="true"></div><p class="fig"><span>Fig. ${i - 2}. ${s.name}, exploded <b data-exp>0%</b></span><span>Drawing. No hardware shown. ${tag(ch[i].label)}</span></p></div>`;
+const FIG = (i, s) => `<div class="stg"><canvas aria-hidden="true"></canvas><svg class="lead" aria-hidden="true"></svg><div class="lead__labels" aria-hidden="true"></div><p class="vh">Exploded drawing of ${s.name}. A drawing: no hardware is shown. ${ch[i].label}.</p></div>`;
 
 const RIDE = {
   wheel: { html: WHEEL },
@@ -181,7 +181,7 @@ function leaders(host, M, stg) {
   const measure = () => items.forEach((it) => { it.w = it.el.offsetWidth; it.h = it.el.offsetHeight; });
   measure(); if (document.fonts) document.fonts.ready.then(measure); new ResizeObserver(measure).observe(host);
   return { layout(a) {
-    const W = host.clientWidth, H = host.clientHeight, sm = W < 560, pad = sm ? 4 : 8, gap = sm ? 30 : 38, top = sm ? 8 : 24, bot = sm ? 40 : 70, cx = W / 2;
+    const W = host.clientWidth, H = host.clientHeight, sm = W < 560, pad = sm ? 4 : 8, gap = sm ? 30 : 38, top = sm ? 8 : 24, bot = sm ? 16 : 28, cx = W / 2;
     items.forEach((it) => { it.pt = stg.project(it.at, it.part); if (!it.pt) return; if (!it.side) it.side = it.pt.x < cx ? -1 : 1; else if (Math.abs(it.pt.x - cx) > W * .12) it.side = it.pt.x < cx ? -1 : 1; });
     [-1, 1].forEach((side) => { const g = items.filter((x) => x.pt && x.side === side).sort((u, v) => u.pt.y - v.pt.y); let y = top; g.forEach((x) => { x.ty = Math.max(y, x.pt.y); y = x.ty + gap; }); let m = H - bot; for (let i = g.length - 1; i >= 0; i--) { if (g[i].ty > m) g[i].ty = m; m = g[i].ty - gap; } });
     items.forEach((it) => {
@@ -220,7 +220,7 @@ function machineStage(sec, id) {
     s.state.yaw += yawS - yawLast; yawLast = yawS;
     s.set({ explode: e, pitch: cam.pitch + pS, dist: cam.dist * (1 + cfg.distK * e) });
     if (L) L.layout(smooth(.12, .42, e));
-    const pc = Math.round(e * 100); if (pc !== shown) { shown = pc; exp.textContent = pc + '%'; }
+    const pc = Math.round(e * 100); if (pc !== shown) { shown = pc; if (exp) exp.textContent = pc + '%'; }
   } });
   if (M.labels && M.labels.length) L = leaders(host, M, s);
   return { set(v) { Object.assign(tgt, v); }, gone() { try { s.destroy(); const gl = canvas.getContext('webgl'); const x = gl && gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); } catch (err) {} } };
@@ -473,7 +473,7 @@ function home() {
       view.prepend(n); HOME = { n, mode, r: makeRide(n) };
     }
   }
-  showHome(true);
+  showHome(true); root.classList.remove('on-stop'); showPull(0);
   peek(LINE);
   HOME.r.on();
   document.title = C.brand.name;
@@ -506,6 +506,7 @@ document.addEventListener('click', (e) => { const a = e.target.closest && e.targ
 let armed = false, riding = false, lockUntil = 0, stopRaf = 0;
 function stopScroll() {
   stopRaf = 0; if (cur < 0) return;
+  if (scrollY > 0) topSince = 0; else if (!topSince) topSince = performance.now();
   const max = document.documentElement.scrollHeight - innerHeight, y = scrollY, bar = $('.band .trk b', stopBox), nu = $('.nextup', stopBox);
   if (bar) bar.style.transform = `scaleX(${max > 4 ? clamp01(y / max).toFixed(4) : 0})`;
   if (!nu) return;
@@ -516,6 +517,36 @@ function stopScroll() {
   if (armed && !riding && performance.now() > lockUntil && max > 4 && y >= max - 1) { riding = true; armed = false; location.hash = nu.getAttribute('href').slice(1); }
 }
 addEventListener('scroll', () => { if (cur >= 0 && !stopRaf) stopRaf = requestAnimationFrame(stopScroll); }, { passive: true });
+
+/* The other direction. At the top of a stop, keep scrolling up (or pull down on a phone) and you go back to where you came from:
+   the stop you rode in from, at its end, or the place on the home page you opened this stop from. */
+const trail = [];                          /* the places visited this visit, in order */
+let leaving = false, landAtEnd = false, upAcc = 0, upAt = 0, topSince = 0, pullT = 0, ty0 = null, pulled = false;
+const pull = document.createElement('div'); pull.className = 'pull'; pull.setAttribute('aria-hidden', 'true'); pull.innerHTML = '<span></span><i></i>'; document.body.append(pull);
+const showPull = (k) => { pull.style.setProperty('--k', clamp01(k).toFixed(3)); };
+const backKey = (i) => (trail.length > 1 ? trail[trail.length - 2] : i > 0 ? STOPS[i - 1].id : 'map');
+function goBack() {
+  if (cur < 0 || leaving) return; leaving = true; landAtEnd = true; showPull(0);
+  /* whatever is left of the scroll that asked to go back is swallowed, so the place you return to does not drift */
+  addEventListener('wheel', eat, { passive: false }); setTimeout(() => removeEventListener('wheel', eat), 560);
+  if (trail.length > 1) history.back(); else location.hash = cur > 0 ? STOPS[cur - 1].id : 'map';
+}
+addEventListener('wheel', (e) => {
+  if (cur < 0 || leaving) return;
+  const now = performance.now();
+  if (scrollY > 0) { topSince = 0; if (upAcc) { upAcc = 0; showPull(0); } return; }
+  if (!topSince) topSince = now;
+  if (e.deltaY >= 0) { if (upAcc) { upAcc = 0; showPull(0); } return; }
+  /* the scroll that brought you to the top has to run out first, so arriving at the top never counts as asking to leave */
+  if (now < lockUntil || now - topSince < 340) return;
+  if (now - upAt > 650) upAcc = 0; upAt = now;
+  upAcc += Math.min(110, -e.deltaY); showPull(upAcc / 330);
+  clearTimeout(pullT); pullT = setTimeout(() => { upAcc = 0; showPull(0); }, 700);
+  if (upAcc >= 330) { clearTimeout(pullT); goBack(); }
+}, { passive: true });
+addEventListener('touchstart', (e) => { ty0 = cur >= 0 && scrollY <= 0 && e.touches.length === 1 ? e.touches[0].clientY : null; pulled = false; }, { passive: true });
+addEventListener('touchmove', (e) => { if (ty0 === null || cur < 0 || leaving) return; const d = e.touches[0].clientY - ty0; if (scrollY > 0 || d <= 0) { pulled = false; showPull(0); return; } showPull(d / 120); pulled = d >= 120; }, { passive: true });
+addEventListener('touchend', () => { if (pulled && !leaving && performance.now() > lockUntil) goBack(); else showPull(0); pulled = false; ty0 = null; }, { passive: true });
 const eat = (e) => e.preventDefault();
 function settle() {
   const touch = matchMedia('(pointer: coarse)').matches;
@@ -526,7 +557,8 @@ function stop(i, dir) {
   const s = STOPS[i], p = STOPS[i - 1], n = STOPS[i + 1], S = sections(s);
   hd.innerHTML = `<a class="brand" href="#map" aria-label="${C.brand.name}, back to the map">${C.brand.mark}<span>${C.brand.name}</span></a>${rail(i)}<span class="sp"></span><a class="lnk" href="#map">Map</a>`;
   const bullets = s.all ? ['w', 'r', 'n', 'h'] : s.l === 't' ? [] : [s.l];
-  showHome(false);
+  showHome(false); root.classList.add('on-stop');
+  { const b = STOPS.find((x) => x.id === backKey(i)); $('span', pull).textContent = b ? `Back to ${b.name}` : 'Back to the line'; showPull(0); upAcc = 0; topSince = performance.now(); }
   const jump = S.length > 1 ? `<nav class="tabs" aria-label="On this page">${S.map((x, k) => `<button type="button" class="tab" data-sec="${k}"${k ? '' : ' aria-current="true"'}>${x.t}</button>`).join('')}</nav>` : '';
   const sign = `<header class="sign"><p class="sp2">${bullets.map((b) => `<i class="bu ${b}">${b.toUpperCase()}</i>`).join('')}<span>${num(i)}</span>${s.place ? `<span class="pl">${s.place}</span>` : ''}${s.st ? tag(s.st) : ''}</p><h1>${s.name}</h1>${s.line ? `<p class="ln1">${s.line.replace(/(\w+-\w+)/g, '<span class="nw">$1</span>')}</p>` : ''}${jump}</header>`;
   const sec = (x, k) => `<section class="sec${k ? '' : ' first'}${x.right ? '' : ' solo'}${x.cls ? ' ' + x.cls : ''}" id="sec-${k}"${k ? ` aria-labelledby="sec-h-${k}"` : ''}>${k ? `<h2 class="sec-h" id="sec-h-${k}">${x.h || x.t}</h2>` : sign}${x.left ? `<div class="sec-b">${x.left}</div>` : ''}${x.right ? `<div class="sec-v">${x.right}</div>` : ''}</section>`;
@@ -602,10 +634,17 @@ let cur = -1, fromRide = false, rideOff = null;
 const goHome = () => { home(); const r = HOME.r; rideOff = () => r.off(); };
 function route() {
   const h = location.hash.slice(1), i = STOPS.findIndex((s) => s.id === h);
+  { const key = i >= 0 ? h : 'home'; if (trail.length > 1 && trail[trail.length - 2] === key) trail.pop(); else if (trail[trail.length - 1] !== key) trail.push(key); }
+  const atEnd = landAtEnd; landAtEnd = false; leaving = false;
   if (rideOff) { if (i >= 0) fromRide = HOME.r.inRide(); rideOff(); rideOff = null; }
   if (h === 'anime') { if (reduced || window.BD_FILM === false) { location.hash = 'map'; return; } const back = cur >= 0; root.classList.add('bdi-off'); cur = -1; film(true); goHome(); if (back) $('#app').scrollIntoView(); else scrollTo(0, 0); return; }
   film(false);
-  if (i >= 0) { const dir = cur < 0 || i >= cur ? 1 : -1; root.classList.add('bdi-off'); stop(i, dir); cur = i; scrollTo(0, 0); return; }
+  if (i >= 0) {
+    const dir = cur < 0 || i >= cur ? 1 : -1; root.classList.add('bdi-off'); stop(i, dir); cur = i; scrollTo(0, 0);
+    /* Coming back up into a stop: arrive at its end, with its Next stop strip just below the screen, as if you had only scrolled back */
+    if (atEnd) { const nu = $('.nextup', stopBox), b = $('.band', stopBox); if (nu) scrollTo(0, Math.max(0, nu.getBoundingClientRect().top + scrollY - innerHeight + (b && getComputedStyle(b).position === 'sticky' ? b.offsetHeight : 0))); }
+    return;
+  }
   if (h === 'map' || (!h && cur >= 0)) {
     if (!h) { try { history.replaceState(null, '', '#map'); } catch (e) {} }
     /* Back from a stop you reached from the line: land on that stop's screen, not the top. */
