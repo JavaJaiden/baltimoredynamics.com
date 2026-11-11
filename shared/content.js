@@ -124,7 +124,9 @@ BD.content = {
   contact: { title: "Build it with us.", body: "We want to hear from investors, fire departments, utilities and engineers who'd rather work on hard machines.", place: "Baltimore, Maryland", email: "support@narb.cc" },
   legal: "Baltimore Dynamics systems are in development and have not been flight-tested or field-tested. Machines on this site are shown as drawings and simulations and do not depict existing hardware. Baltimore Dynamics is backed by Northrop Grumman and Mr. Trash Wheel. Other organizations named on this site describe past work and do not imply endorsement. Military service is listed as biography and does not imply endorsement by the U.S. Marine Corps or Department of Defense. This site is not an offer to sell securities. © 2026 Baltimore Dynamics.",
 };
-BD.img = (name, base) => (base || "shared/img/") + name + ".jpg";
+/* The five largest photographs are served as smaller WebP files. */
+BD.webp = { sensor: 1, bench: 1, jar: 1, aesv: 1, mtw: 1 };
+BD.img = (name, base) => (base || "shared/img/") + name + (BD.webp[name] ? ".webp" : ".jpg");
 
 /* Story order: the rover comes first now, then the two aircraft. */
 BD.content.systems.items = ["rover", "swarm", "overhead"].map((id) => BD.content.systems.items.find((m) => m.id === id));

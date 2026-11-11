@@ -1,6 +1,8 @@
 /* m01 Line Map. One map, twelve stops, every stop its own screen. */
 (() => {
 const C = BD.content, ch = C.chapters, O = C.origin, DZ = O.deadZone, TW = O.trashWheel, AE = C.aesv, HM = C.harbormaster, ST = C.status, PE = C.people;
+/* The built site carries every page as plain text in the HTML itself (tools/prerender.mjs). Where it is there, we link to it. */
+const PLAIN = document.getElementById('text') ? '<p class="plain"><a href="#text">Read the whole site on one plain page</a></p>' : '';
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const sys = (id) => C.systems.items.find((m) => m.id === id);
 const IMG = { tyler: [720, 912], dom: [522, 800], sophia: [800, 800], eyobed: [800, 800], mike: [200, 200], duck: [700, 934], dinghy: [747, 420], yacht: [470, 420], jar: [1100, 1754], bench: [1600, 1204], sensor: [1600, 2126], flagwall: [560, 420], nightdesk: [560, 420], aesv: [1200, 1706], mtw: [1600, 1066] };
@@ -98,10 +100,10 @@ const STOPS = [
     { t: 'The story', h: 'The story.', left: `<div class="prose">${O.paras.map((p) => `<p>${p}</p>`).join('')}</div>`, right: pic(photo('flagwall', C.log.photos[5].alt), '', C.log.photos[5].cap) },
   ] },
   { id: 'log', l: 't', wide: 1, name: 'Field log', place: 'Real photographs', line: C.log.title, log: 1 },
-  { id: 'contact', l: 't', name: 'Contact', place: C.contact.place, line: C.contact.title, tabs: [{ t: 'Contact', left: sub(C.contact.body) + MAIL + BACKEDX, right: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>` }] },
+  { id: 'contact', l: 't', name: 'Contact', place: C.contact.place, line: C.contact.title, tabs: [{ t: 'Contact', left: sub(C.contact.body) + MAIL + BACKEDX, right: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p>${PLAIN}</div>` }] },
 ];
 const num = (i) => String(i + 1).padStart(2, '0');
-const hd = $('#hd'), view = $('#view'), root = document.documentElement;
+const hd = $('#hd'), view = $('#view'), root = document.documentElement, TXT = $('#text'), TITLE0 = document.title;
 /* Stop pages render here; the home page stays in the document beside it, hidden but with its layout kept. */
 const stopBox = document.createElement('div'); stopBox.className = 'stopv'; stopBox.hidden = true; view.append(stopBox);
 const showHome = (on) => { stopBox.hidden = on; if (on) stopBox.replaceChildren(); if (HOME) HOME.n.classList.toggle('away', !on); };
@@ -160,7 +162,7 @@ const RIDE = {
   crew: { wide: 1, line: 'The people behind the work.', html: `<ul class="crw">${PEOPLE.map((p, k) => `<li><a href="#crew" data-k="${k}">${photo(p.photo.src, p.photo.alt)}<b>${p.name}</b><span>${p.role}</span></a></li>`).join('')}</ul>`, cta: 'Meet the crew' },
   origin: { wide: 1, html: `<ol class="otl">${O.timeline.map(([d, t]) => `<li><i></i><time>${d}</time><b>${t}</b></li>`).join('')}</ol>`, cta: 'Read the story' },
   log: { html: `<div class="mos">${C.log.photos.map((p, k) => `<a href="#log" data-k="${k}">${thumb(p.src, p.alt)}</a>`).join('')}</div>`, cta: 'Open the field log' },
-  contact: { extra: sub(C.contact.body) + MAIL + BACKED, html: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>`, cta: false },
+  contact: { extra: sub(C.contact.body) + MAIL + BACKED, html: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p>${PLAIN}</div>`, cta: false },
 };
 const bullets = (s) => (s.all ? ['w', 'r', 'n', 'h'] : s.l === 't' ? [] : [s.l]).map((b) => `<i class="bu ${b}">${b.toUpperCase()}</i>`).join('');
 const rideSec = (s, i) => {
@@ -176,7 +178,7 @@ const rideSec = (s, i) => {
   return `<section ${at}>${txt}<div class="vis"><div class="vin">${V.html}</div></div></section>`;
 };
 const RIDEHTML = () => `<div class="ride" id="ride"><svg class="track" aria-hidden="true"></svg><p class="ride-cue"><i></i>Scroll to ride the line</p>${STOPS.map(rideSec).join('')}
-  <footer class="end"><a class="totop" href="#map">Back to the map<span aria-hidden="true">↑</span></a><span>${C.contact.place}</span></footer></div>`;
+  <footer class="end"><a class="totop" href="#map">Back to the map<span aria-hidden="true">↑</span></a>${PLAIN}<span>${C.contact.place}</span></footer></div>`;
 
 /* Labels with leader lines that track points on a moving drawing. Ported from Noir. */
 function leaders(host, M, stg) {
@@ -509,7 +511,7 @@ function home() {
   showHome(true); root.classList.remove('on-stop'); showPull(0);
   peek(LINE);
   HOME.r.on();
-  document.title = C.brand.name;
+  document.title = TITLE0;
 }
 /* Hyphenated words in the headline never break across lines */
 const peek = (t) => { const p = $('#peek'); if (p) p.innerHTML = t.replace(/(\w+-\w+)/g, '<span class="nw">$1</span>'); };
@@ -669,7 +671,18 @@ hd.addEventListener('click', (e) => { if (e.target.closest('[href="#anime"]') &&
 let cur = -1, fromRide = false, rideOff = null;
 const goHome = () => { home(); const r = HOME.r; rideOff = () => r.off(); };
 function route() {
-  const h = location.hash.slice(1), i = STOPS.findIndex((s) => s.id === h);
+  const h = location.hash.slice(1), i = STOPS.findIndex((s) => s.id === h), txt = !!TXT && (h === 'text' || h.slice(0, 2) === 't-');
+  root.classList.toggle('plainv', txt);
+  if (txt) {
+    /* The whole site as one plain page (#text, or #t-crew for one part of it). The animated site waits underneath. */
+    if (rideOff) { rideOff(); rideOff = null; }
+    film(false); root.classList.add('bdi-off'); landAtEnd = false; leaving = false; cur = -1; fromRide = false;
+    document.title = `The whole site on one page · ${C.brand.name}`;
+    const part = h === 'text' ? null : document.getElementById(h);
+    if (part) part.scrollIntoView(); else scrollTo(0, 0);
+    TXT.focus({ preventScroll: true });
+    return;
+  }
   { const key = i >= 0 ? h : 'home'; if (trail.length > 1 && trail[trail.length - 2] === key) trail.pop(); else if (trail[trail.length - 1] !== key) trail.push(key); }
   const atEnd = landAtEnd; landAtEnd = false; leaving = false;
   if (rideOff) { if (i >= 0) fromRide = HOME.r.inRide(); rideOff(); rideOff = null; }
@@ -740,5 +753,7 @@ addEventListener('pointermove', (e) => {
   $$('.eyes .pu').forEach((p) => { const cx = +p.getAttribute('cx'), s = p.ownerSVGElement, m = s.getScreenCTM(); if (!m) return; const x = (e.clientX - m.e) / m.a - cx, y = (e.clientY - m.f) / m.d - 190, l = Math.hypot(x, y) || 1, k = Math.min(10, l); p.setAttribute('transform', `translate(${(x / l * k).toFixed(1)} ${(y / l * k).toFixed(1)})`); });
   $$('.eye b').forEach((b) => { const r = b.parentNode.getBoundingClientRect(), x = e.clientX - r.left - r.width / 2, y = e.clientY - r.top - r.height / 2, l = Math.hypot(x, y) || 1, k = Math.min(r.width * .17, l); b.style.transform = `translate(${(x / l * k).toFixed(1)}px,${(y / l * k).toFixed(1)}px)`; });
 }, { passive: true });
+/* The page shows its plain version if this script has not arrived after a while (see the head of index.html). It has now. */
+window.BD_READY = 1; root.classList.add('js');
 route();
 })();
