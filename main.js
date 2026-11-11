@@ -5,7 +5,7 @@ const C = BD.content, ch = C.chapters, O = C.origin, DZ = O.deadZone, TW = O.tra
 /* Visit counts go to PostHog. Its script is added to the head by tools/build-site.py and only runs on the real site, so in tests and
    previews window.posthog is absent and these do nothing. Each stop counts as a page of its own (/harbormaster), the line as /. */
 let phPath = null, phT = 0; const phSeen = new Set();
-const track = (path, title) => { if (!window.posthog || path === phPath) return; phPath = path; try { window.posthog.capture('$pageview', { $current_url: location.origin + path, $pathname: path, title }); } catch (e) {} };
+const track = (path) => { if (!window.posthog || path === phPath) return; phPath = path; /* a moment later, so the page's new title is in place: PostHog reads it from the document */ setTimeout(() => { try { window.posthog.capture('$pageview', { $current_url: location.origin + path, $pathname: path }); } catch (e) {} }, 0); };
 /* A stop on the line, or a card on the phone deck, counts as seen once someone has stayed on it for a moment. */
 const dwell = (id, via) => { if (!window.posthog) return; clearTimeout(phT); phT = setTimeout(() => { if (phSeen.has(id)) return; phSeen.add(id); try { window.posthog.capture('stop seen', { stop: id, via }); } catch (e) {} }, 1500); };
 const PLAIN = document.getElementById('text') ? '<p class="plain"><a href="#text">Read the whole site on one plain page</a></p>' : '';
@@ -679,7 +679,7 @@ const goHome = () => { home(); const r = HOME.r; rideOff = () => r.off(); };
 function route() {
   const h = location.hash.slice(1), i = STOPS.findIndex((s) => s.id === h), txt = !!TXT && (h === 'text' || h.slice(0, 2) === 't-');
   root.classList.toggle('plainv', txt);
-  track(txt ? '/text' : i >= 0 ? '/' + h : '/', txt ? 'The whole site on one page' : i >= 0 ? STOPS[i].name : C.brand.name);
+  track(txt ? '/text' : i >= 0 ? '/' + h : '/');
   if (txt) {
     /* The whole site as one plain page (#text, or #t-crew for one part of it). The animated site waits underneath. */
     if (rideOff) { rideOff(); rideOff = null; }
