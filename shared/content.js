@@ -32,7 +32,7 @@ BD.content = {
   ],
   /* From the October 2023 AESV design documents. Always show with the Designed label. */
   aesv: { title: "Autonomous Environmental Survey Vessel", label: "Designed", cap: "From the October 2023 system design.",
-    parts: ["CubePilot autopilot running ArduPilot", "Raspberry Pi 5 mission computer", "Slamtec lidar", "Three cameras", "100 W solar panel", "pH, dissolved oxygen, turbidity and temperature sensors"] },
+    parts: ["CubePilot autopilot running ArduPilot", "Raspberry Pi 5 mission computer", "Slamtec lidar", "Three cameras", "100 W solar panel", "pH, dissolved oxygen, turbidity and temperature sensors"] },
   origin: { kicker: "Origin", title: "We learned autonomy on the Chesapeake.",
     paras: [
       "Baltimore Dynamics grew out of the Northrop Grumman Innovation Lab at the University of Maryland, a student lab with one standing question: where are the Bay's dead zones, and can a machine find them first?",
@@ -42,7 +42,7 @@ BD.content = {
     photo: { src: "aesv", alt: "The AESV inflatable test hull on Baltimore Harbor with brick waterfront buildings behind it", cap: "AESV test hull, Baltimore Harbor, July 2024." },
     deadZone: { kicker: "The first problem", title: "What a dead zone is.",
       body: "Fertilizer and stormwater runoff feed algae blooms. When the algae die, bacteria use up the oxygen in the water and fish can't stay. Our first machines were built to find those places before they spread: a boat that could hold its position against the current, sensors that didn't need a person standing over them, and a record that scientists could check.",
-      stats: [["~7 mg/L", "dissolved oxygen in good-quality water"], ["<2 mg/L", "the line where water turns hypoxic"], ["4 sensors", "pH, dissolved oxygen, turbidity, temperature"]] },
+      stats: [["~7 mg/L", "dissolved oxygen in good-quality water"], ["<2 mg/L", "the line where water turns hypoxic"], ["4 sensors", "pH, dissolved oxygen, turbidity, temperature"]] },
     timeline: [
       ["July 2022", "Drones over the Bay", "Aerial collection runs for Chesapeake water sampling."],
       ["May–June 2023", "Algae sampling", "Field samples and imagery from algae blooms in Bay waters."],
@@ -59,21 +59,29 @@ BD.content = {
     items: [
       { id: "swarm", name: "SWARM-N", role: "Neighborhood fire response", model: "swarm",
         steps: ["An operator assigns aircraft to a zone.", "Each aircraft delivers its tank on the hotspot.", "Empties refill while full aircraft take over."],
-        body: "Two liters plus delivery hardware is a 2.4 kg payload, and it's gone in 12 seconds at 10 L/min. That already rules out hobby-class airframes. Fleet size isn't the limit either: in our model, six aircraft deliver 22 L with one refill station and 32 L with two.",
-        specs: [["Sizing example", "2 L at 10 L/min, 12 s of flow", "Calculated"], ["Fleet example", "6 aircraft, 2 stations: 32 L in 10 min", "Simulated"], ["Control", "Human supervisor on every sortie", "Design rule"]],
+        body: "Two liters plus delivery hardware is a 2.4 kg payload, and it's gone in 12 seconds at 10 L/min. That already rules out hobby-class airframes. Fleet size isn't the limit either: in our model, six aircraft deliver 22 L with one refill station and 32 L with two.",
+        specs: [["Sizing example", "2 L at 10 L/min, 12 s of flow", "Calculated"], ["Fleet example", "6 aircraft, 2 stations: 32 L in 10 min", "Simulated"], ["Control", "Human supervisor on every sortie", "Design rule"]],
         prove: "Useful water quantity, aircraft sizing, response cycle, flight envelope and real fire-control results. Outdoor operation under FAA Part 107 also needs waivers for one pilot flying several aircraft and for flight beyond line of sight." },
       { id: "overhead", name: "OVERHEAD-H", role: "Industrial overhead attack", model: "overhead",
         steps: ["Pump and hose stage on the ground.", "The aircraft lifts the nozzle to working height.", "Stopping the water stays separate from stopping flight."],
-        body: "Thrust isn't the hard part. A side force applied below the body is. In six-degree-of-freedom simulation, a 3 N side load tips the aircraft 11.6°. At 8 N it reaches 29.2° and fails our 25° screen. Exterior work and indoor high-bay work are separate programs with separate problems.",
-        specs: [["15 m working height", "40 L/min, 4.71 bar, 523 W pump shaft", "Calculated"], ["100 m working height", "100 L/min, 20.64 bar, 5.73 kW", "Calculated"], ["3 N side load", "11.6° peak tilt, 6-DOF model", "Simulated"]],
+        body: "Thrust isn't the hard part. A side force applied below the body is. In six-degree-of-freedom simulation, a 3 N side load tips the aircraft 11.6°. At 8 N it reaches 29.2° and fails our 25° screen. Exterior work and indoor high-bay work are separate programs with separate problems.",
+        specs: [["15 m working height", "40 L/min, 4.71 bar, 523 W pump shaft", "Calculated"], ["100 m working height", "100 L/min, 20.64 bar, 5.73 kW", "Calculated"], ["3 N side load", "11.6° peak tilt, 6-DOF model", "Simulated"]],
         prove: "Real hose forces and moments, restraint and release behavior, host-aircraft compatibility and thermal limits." },
       { id: "rover", name: "FALLSWAY-R", role: "Pipe cleaning and inspection", model: "rover",
         steps: ["Lowered through a manhole on its tether.", "Works the defined obstruction.", "Logs the wall, marking every target readable or not."],
-        body: "A cleaning nozzle can't simply be bolted on. At 13.5 kg the crawler has 23.68 N of traction available and 22.03 N of resistance before any tool load, so the next design gives the cleaning tool its own load path. The inspection tool checks 80 wall targets and never counts missing footage as a clean pipe.",
-        specs: [["Assembly", "233 solids with wheel modules", "Designed"], ["Reference traction", "23.68 N friction limit at 13.5 kg", "Calculated"], ["Cost per accepted job", "25% lower than today's crews", "Target"]],
+        body: "A cleaning nozzle can't simply be bolted on. At 13.5 kg the crawler has 23.68 N of traction available and 22.03 N of resistance before any tool load, so the next design gives the cleaning tool its own load path. The inspection tool checks 80 wall targets and never counts missing footage as a clean pipe.",
+        specs: [["Assembly", "233 solids with wheel modules", "Designed"], ["Reference traction", "23.68 N friction limit at 13.5 kg", "Calculated"], ["Cost per accepted job", "25% lower than today's crews", "Target"]],
         prove: "Sealed harness, independent power cutoff, rated recovery hardware, tool restraint and trials on a real customer job." },
     ] },
   harbormaster: { kicker: "Harbormaster · Fleet software", title: "One board for every machine.",
+    plain: "A harbormaster decides which ship gets which berth. Ours does that job for our machines. It keeps track of every aircraft, pilot and refill station, so no two are ever sent to the same place.",
+    short: "Software that keeps every aircraft, pilot and refill station from being double-booked.",
+    does: ["Gives each aircraft a zone, a pilot and a place to refill.", "Holds an aircraft's place if its radio link drops, until a person confirms it has landed.", "Keeps the water switch separate from the flight controls."],
+    tryIt: ["Press Drop an aircraft's link.", "Its refill station turns red. It is held, and no other aircraft can take it.", "Press Confirm it's grounded to free the station."],
+    fleetPlain: "Aircraft have to come back to refill. With too few refill stations they wait in line, and adding more aircraft stops helping. Move the sliders and watch how much water is delivered in ten minutes.",
+    switchPlain: "This is the safety logic for the water. Press the buttons in any order and try to get the water on when it shouldn't be.",
+    switchRules: ["A late command can't revive expired permission.", "Holding the switch at startup doesn't arm it.", "Recovery never restarts the water on its own."],
+    demoNote: "Harbormaster is software. The demos on this page run in your browser and are not connected to any hardware.",
     body: "Harbormaster assigns aircraft, pilots, operating zones and refill stations so nothing gets booked twice. When contact with an aircraft drops, its reservation holds until a person confirms it's on the ground.",
     pillars: [["Assign", "Aircraft, pilots, operating zones and refill stations are booked like resources. A second booking on the same resource is rejected."], ["Hold", "If contact with an aircraft drops, its reservation stays in place until a person confirms it's on the ground."], ["Record", "Every run logs pressure, collected water mass, three-axis force, temperature and timestamps, then checks for gaps and invalid values."], ["Separate", "Water permission and flight are separate systems. Shutting off the water never means shutting off the aircraft."]],
     board: { kicker: "Try it", title: "Drop a link. Watch what the board does.", body: "This is the rule in action. Lose contact with an aircraft and its refill station stays reserved, so the rest of the fleet can't take it. The hold ends only when a person confirms the aircraft is down." },
@@ -82,7 +90,7 @@ BD.content = {
   status: { title: "What exists today.", sub: "The rest of this page shows where we're going. This table shows where we are.",
     stats: [["233", "solids in the rover assembly"], ["19", "editable mechanical designs"], ["62,428", "elements in the finest fixture model"], ["723", "automated software tests"]],
     rows: [
-      ["Rover mechanical design", "Full assembly with wheel modules and retention hardware", "Designed"], ["Drone load cassette", "Removable test cassette, 649 g calculated wet payload", "Designed"],
+      ["Rover mechanical design", "Full assembly with wheel modules and retention hardware", "Designed"], ["Drone load cassette", "Removable test cassette, 649 g calculated wet payload", "Designed"],
       ["Structural analysis", "Beam model within 0.55% of the closed-form answer", "Simulated"], ["Flight dynamics", "Six-degree-of-freedom model, 24-case parameter sweep", "Simulated"],
       ["Payload safety logic", "56 native assertions, checked for memory errors", "Software tested"], ["Aircraft flight with water", "No aircraft has flown this payload", "Next"],
       ["Pipe cleaning trials", "No physical trial yet", "Next"], ["Head-to-head against incumbents", "Planned once physical trials exist", "Next"] ],
@@ -91,7 +99,7 @@ BD.content = {
   people: { kicker: "People", title: "The crew.",
     lead: { name: "Tyler “Duck” Duckett", role: "RF Engineer", photo: { src: "tyler", alt: "Portrait of Tyler Duckett in Marine Corps dress blues" },
       paras: ["Five years as a Marine Corps radar technician, keeping an S-band AESA radar on the air across the Pacific. Now building the radio links our machines depend on.",
-        "Tyler leads antenna and RF work on a 440 MHz balloon payload at the University of Maryland while studying electrical engineering. Every sortie and every rover run needs a link that holds. That link is Tyler's job.",
+        "Tyler leads antenna and RF work on a 440 MHz balloon payload at the University of Maryland while studying electrical engineering. Every sortie and every rover run needs a link that holds. That link is Tyler's job.",
         "On the radar, the job was fault isolation across transmit and receive modules, prime power, liquid cooling and signal processing, then alignment and calibration after every site move: transmit power, receiver sensitivity and timing, back to specification."],
       easter: { src: "duck", alt: "A mallard standing on a wooden dock in Baltimore Harbor", cap: "Baltimore Harbor, June 2023. No relation." } },
     crew: [
@@ -114,4 +122,4 @@ BD.img = (name, base) => (base || "shared/img/") + name + ".jpg";
 /* Story order: the rover comes first now, then the two aircraft. */
 BD.content.systems.items = ["rover", "swarm", "overhead"].map((id) => BD.content.systems.items.find((m) => m.id === id));
 /* Required on every site, near the footer legal text. */
-BD.content.credit = "Map data © OpenStreetMap contributors. Depth data: NOAA ETOPO 2022.";
+BD.content.credit = "Photograph of Mr. Trash Wheel: <a href=\"https://commons.wikimedia.org/wiki/File:Mr._Trash_Wheel_(27582099121).jpg\" target=\"_blank\" rel=\"noopener\">Matthew Bellemare, CC BY-SA 2.0</a>, cropped and cut out on the first screen, cropped and converted to black and white elsewhere. Map data © OpenStreetMap contributors. Depth data: NOAA ETOPO 2022.";

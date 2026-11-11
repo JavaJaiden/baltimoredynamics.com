@@ -3,10 +3,12 @@
 const C = BD.content, ch = C.chapters, O = C.origin, DZ = O.deadZone, TW = O.trashWheel, AE = C.aesv, HM = C.harbormaster, ST = C.status, PE = C.people;
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const sys = (id) => C.systems.items.find((m) => m.id === id);
-const IMG = { tyler: [720, 912], dom: [522, 800], sophia: [800, 800], eyobed: [800, 800], mike: [200, 200], duck: [700, 934], dinghy: [747, 420], yacht: [558, 420], jar: [1100, 1754], bench: [1600, 1204], sensor: [1600, 2126], flagwall: [560, 420], nightdesk: [560, 420], aesv: [1200, 1706], mtw: [1600, 1066] };
+const IMG = { tyler: [720, 912], dom: [522, 800], sophia: [800, 800], eyobed: [800, 800], mike: [200, 200], duck: [700, 934], dinghy: [747, 420], yacht: [470, 420], jar: [1100, 1754], bench: [1600, 1204], sensor: [1600, 2126], flagwall: [560, 420], nightdesk: [560, 420], aesv: [1200, 1706], mtw: [1600, 1066] };
 const TAGS = { Designed: 'des', Simulated: 'sim', Calculated: 'cal', Target: 'tar', 'Software tested': 'sof', Next: 'nxt', 'Design rule': 'rul', Illustration: 'ill' };
 const tag = (t) => `<span class="tag t-${TAGS[t] || 'rul'}">${t}</span>`;
 const photo = (n, alt, cls = '') => `<img class="${cls}" src="${BD.img(n)}" width="${IMG[n][0]}" height="${IMG[n][1]}" alt="${alt}" loading="lazy">`;
+/* Small tiles get a 480px copy; the full photo loads only when it is shown large */
+const thumb = (n, alt) => `<img src="shared/img/t/${n}.webp" width="${IMG[n][0]}" height="${IMG[n][1]}" alt="${alt}" loading="lazy">`;
 const cut = (n, w, h, alt) => `<img src="shared/cut/${n}-linework.webp" width="${w}" height="${h}" alt="${alt}" loading="lazy">`;
 const still = (n, alt) => `<img class="fill" src="shared/still/${n}.jpg" width="1600" height="1000" alt="${alt}" loading="lazy">`;
 const pic = (html, t, cap) => `<figure class="pic${cap ? ' withcap' : ''}">${html}${t || cap ? `<figcaption>${t ? tag(t) : ''}${cap ? `<span>${cap}</span>` : ''}</figcaption>` : ''}</figure>`;
@@ -29,51 +31,73 @@ const paintBay = async (r) => {
   s.insertAdjacentHTML('beforeend', '<path class="o2" d="M322 196c8 15 14 37 17 60 4 26 5 54 2 81-3 29-9 56-19 79-8 16-18 20-26 12-8-11-9-33-8-56 1-30 6-57 8-87 2-26 0-54 6-75 4-14 13-28 20-14z"/>');
 };
 
-function machine(id, l, c, line1, over, scene, exp) {
+const row = (a, b) => `<li><b>${a}</b><span>${b}</span></li>`;
+const fine = (t) => (t ? `<p class="fine">${t}</p>` : '');
+const ext = (href, t) => `<a href="${href}" target="_blank" rel="noopener">${t}<span class="vh"> (opens in a new tab)</span></a>`;
+/* Entries from the timeline and rows from the status board, reused on the stops they belong to */
+const TL = (ks) => `<ul class="rows">${ks.map((k) => O.timeline[k]).map(([d, t, b]) => `<li><b>${t}</b><span>${d}. ${b}</span></li>`).join('')}</ul>`;
+const DEP = (ks) => `<table class="dep"><caption class="vh">Where it stands today</caption><tbody>${ks.map((k) => ST.rows[k]).map(([a, b, t]) => `<tr><th scope="row">${a}</th><td>${b}</td><td>${tag(t)}</td></tr>`).join('')}</tbody></table><p class="fine"><a href="#status">See the full status board</a></p>`;
+const MTW = 'https://www.mrtrashwheel.com/how-it-works';
+
+/* A stop is a list of sections. t: its name in the jump links, h: its heading, left: the words, right: the picture or table beside them. */
+function machine(id, l, c, over, scene, exp, dep) {
   const m = sys(id), st = c.label;
-  return { id, l, name: m.name, place: m.role, line: c.title, tabs: [
-    { t: 'Overview', left: sub(line1), right: pic(over, st) },
-    { t: 'How it works', left: `<ol class="steps">${m.steps.map(li).join('')}</ol>`, right: pic(scene, st) },
-    { t: 'Specs', left: `<table class="specs"><tbody>${m.specs.map(([a, b, t]) => `<tr><th scope="row">${a}</th><td>${b}</td><td>${tag(t)}</td></tr>`).join('')}</tbody></table>${more('Engineering note', `<p>${m.body}</p>`)}`, right: pic(exp, st) },
-    { t: 'Still to prove', left: sub(m.prove), right: pic(over, st) },
+  return { id, l, name: m.name, place: m.role, line: c.title, st, tabs: [
+    { t: 'Overview', left: sub(c.body) + fine(c.note), right: pic(over, st) },
+    { t: 'How it works', h: 'How it works.', left: `<ol class="steps">${m.steps.map(li).join('')}</ol>`, right: pic(scene, st) },
+    { t: 'Specs', h: 'The numbers so far.', left: `<table class="specs"><tbody>${m.specs.map(([a, b, t]) => `<tr><th scope="row">${a}</th><td>${b}</td><td>${tag(t)}</td></tr>`).join('')}</tbody></table><p class="lab noteh">Engineering note</p><p class="note">${m.body}</p>`, right: pic(exp, st) },
+    { t: 'Still to prove', h: 'Still to prove.', left: sub(m.prove), right: DEP(dep) },
   ] };
 }
 
 const BAYPIC = `<figure class="pic bay" role="img" aria-label="Contour map of the Chesapeake Bay from NOAA depth data with an illustrative low-oxygen area in the middle of the Bay"><div class="baysvg"></div><figcaption>${tag('Illustration')}</figcaption></figure>`;
-const WHEEL = `<figure class="pano"><div class="stage">${photo('mtw', TW.photo.alt)}<span class="eye l" aria-hidden="true"><b></b></span><span class="eye r" aria-hidden="true"><b></b></span></div><figcaption>Mr. Trash Wheel, Inner Harbor. <a href="${TW.photo.href}" rel="noopener">Photo: Matthew Bellemare, CC BY-SA 2.0.</a> Cropped, converted to black and white, moving eyes added on this site.</figcaption></figure>`;
+const WHEEL = `<figure class="pano"><div class="stage">${photo('mtw', TW.photo.alt)}<span class="eye l" aria-hidden="true"><b></b></span><span class="eye r" aria-hidden="true"><b></b></span></div><figcaption>Mr. Trash Wheel, Inner Harbor. <a href="${TW.photo.href}" target="_blank" rel="noopener">Photo: Matthew Bellemare, CC BY-SA 2.0<span class="vh"> (opens Wikimedia Commons)</span>.</a> Cropped, converted to black and white, moving eyes added on this site.</figcaption></figure>`;
 
+const BACKERS = [
+  { name: 'Northrop Grumman', href: 'https://www.northropgrumman.com/', src: 'shared/logos/northrop-grumman.svg', w: 1010, h: 231, cls: 'ng' },
+  { name: 'Mr. Trash Wheel', href: 'https://www.mrtrashwheel.com/', src: 'shared/logos/mr-trash-wheel.webp', w: 440, h: 120, cls: 'mtw' },
+];
+const BACKED = `<div class="bk"><span>Backed by</span>${BACKERS.map((b) => `<a class="bk-${b.cls}" href="${b.href}" target="_blank" rel="noopener"><img src="${b.src}" width="${b.w}" height="${b.h}" alt="${b.name}"><span class="vh"> (opens their website)</span></a>`).join('')}</div>`;
+const BACKEDX = BACKED;
 const STOPS = [
-  { id: 'wheel', l: 'w', name: 'Mr. Trash Wheel', place: ch[0].place, line: ch[0].title, tabs: [{ left: sub('Mr. Trash Wheel backs our work. We helped directly on its mission to clean the harbor.'), right: WHEEL }] },
+  { id: 'wheel', l: 'w', name: 'Mr. Trash Wheel', place: ch[0].place, line: ch[0].title, tabs: [
+    { t: 'Overview', left: sub(ch[0].body) + fine('Mr. Trash Wheel backs our work.'), right: WHEEL },
+    { t: 'How it works', h: 'The river does the work.', left: `<ol class="steps">${['Floating booms steer what comes down the Jones Falls toward the wheel.', 'The river\'s current turns a 14-foot water wheel. When the current is slow, solar panels run pumps that keep it turning.', 'The wheel drives a rake and a conveyor that lift trash out of the water.', 'The trash drops into a dumpster on its own barge, which is towed away when it is full.'].map(li).join('')}</ol>${fine(`Source: ${ext(MTW, 'mrtrashwheel.com')}`)}`, right: pic(cut('trashWheel-3q', 1329, 969, 'Line drawing of Mr. Trash Wheel from the front quarter'), 'Illustration') },
+    { t: 'Who runs it', h: 'On the water since 2014.', left: `<ul class="rows">${row('Installed', 'May 2014, at the mouth of the Jones Falls')}${row('Invented by', 'John Kellett')}${row('Commissioned by', 'Waterfront Partnership of Baltimore')}${row('Operated by', 'Clearwater Mills')}</ul>${fine(`We helped directly on its mission to clean the harbor. We did not build it and we do not run it. Source: ${ext(MTW, 'mrtrashwheel.com')}`)}`, right: pic(cut('trashWheel-front', 891, 1027, 'Line drawing of Mr. Trash Wheel from the front'), 'Illustration') },
+  ] },
   { id: 'boat', l: 'w', name: 'The Boat', place: ch[1].place, line: ch[1].title, tabs: [
-    { t: 'Overview', left: sub('Sophia Roberts-Weigert led the boat work. Mike Kardas ran the lab and put it on the water.'), right: pic(cut('yacht-3q', 1239, 1063, 'Rendering of the boat that became the floating workshop')) },
-    { t: 'On the water', left: `<ul class="rows">${ch[1].callouts.map((c) => `<li><b>${c.name}</b><span>${c.text}</span></li>`).join('')}</ul>`, right: pic(cut('zodiac-3q', 1329, 869, 'Rendering of the AESV inflatable test hull')) },
-    { t: 'The hull', left: `<p class="lab">${AE.title}</p><ul class="rows tight">${AE.parts.map(li).join('')}</ul><p class="lab">${tag(AE.label)} ${AE.cap}</p>`, right: pic(photo('aesv', O.photo.alt), '', O.photo.cap) },
+    { t: 'Overview', left: sub(ch[1].body), right: pic(cut('yacht-3q', 1239, 1063, 'Rendering of the boat that became the floating workshop')) },
+    { t: 'On the water', h: 'What we put on the water.', left: `<ul class="rows">${ch[1].callouts.map((c) => row(c.name, c.text)).join('')}</ul>`, right: pic(cut('zodiac-3q', 1329, 869, 'Rendering of the AESV inflatable test hull')) },
+    { t: 'The hull', h: AE.title + '.', left: `<ul class="rows tight">${AE.parts.map(li).join('')}</ul><p class="lab">${tag(AE.label)} ${AE.cap}</p>`, right: pic(photo('aesv', O.photo.alt), '', O.photo.cap) },
+    { t: 'Timeline', h: 'The work, in order.', left: TL([0, 1, 2, 3, 4]), right: pic(photo('dinghy', C.log.photos[0].alt), '', C.log.photos[0].cap) },
   ] },
   { id: 'bay', l: 'w', name: 'The Bay', place: ch[2].place, line: ch[2].title, tabs: [
-    { t: 'Overview', left: sub('Our first machines were built to find those places before they spread.') + `<p class="fine">${ch[2].note}</p>`, right: BAYPIC, after: paintBay },
-    { t: 'What a dead zone is', left: sub('Fertilizer and stormwater runoff feed algae blooms. When the algae die, bacteria use up the oxygen in the water and fish can\'t stay.'), right: `<dl class="big">${DZ.stats.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>` },
+    { t: 'Overview', left: sub(ch[2].body) + fine(ch[2].note), right: BAYPIC, after: paintBay },
+    { t: 'What a dead zone is', h: DZ.title, left: sub('Fertilizer and stormwater runoff feed algae blooms. When the algae die, bacteria use up the oxygen in the water and fish can\'t stay.'), right: `<dl class="big">${DZ.stats.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>` },
+    { t: 'What we built', h: 'What we built to find them.', left: sub('A boat that could hold its position against the current, sensors that didn\'t need a person standing over them, and a record that scientists could check.') + TL([2, 5]), right: pic(cut('pierStation-3q', 981, 1591, 'Rendering of the solar water station on a pier')) },
+    { t: 'From the field', h: 'From the field.', left: TL([1]) + fine('<a href="#log">Open the field log</a>'), right: `<div class="duo">${pic(photo('jar', C.log.photos[2].alt), '', C.log.photos[2].cap)}${pic(photo('sensor', C.log.photos[4].alt), '', C.log.photos[4].cap)}</div>` },
   ] },
-  machine('rover', 'r', ch[3], 'A tethered crawler for the pipes under the city.', cut('rover-3q', 1127, 435, 'Rendering of FALLSWAY-R on its tether'), cut('rover-side', 1463, 233, 'Side view rendering of FALLSWAY-R paying out its tether from the reel'), cut('rover-exploded', 1329, 561, 'Exploded rendering of FALLSWAY-R')),
-  machine('swarm', 'n', ch[4], 'A supervised swarm of small aircraft for exterior fires near homes.', cut('swarm-3q', 1749, 817, 'Rendering of a SWARM-N aircraft'), cut('swarm-top', 1755, 1589, 'Top view rendering of a SWARM-N aircraft'), cut('swarm-exploded', 1815, 1167, 'Exploded rendering of a SWARM-N aircraft')),
-  machine('overhead', 'h', ch[5], 'The pump and the water stay on the ground.', cut('overhead-3q', 813, 1233, 'Rendering of OVERHEAD-H holding a hose'), cut('overhead-side', 795, 1451, 'Side view rendering of OVERHEAD-H with its hose'), cut('overhead-exploded', 817, 1401, 'Exploded rendering of OVERHEAD-H')),
+  machine('rover', 'r', ch[3], cut('rover-3q', 1127, 435, 'Rendering of FALLSWAY-R on its tether'), cut('rover-side', 1463, 233, 'Side view rendering of FALLSWAY-R paying out its tether from the reel'), cut('rover-exploded', 1329, 561, 'Exploded rendering of FALLSWAY-R'), [0, 6, 7]),
+  machine('swarm', 'n', ch[4], cut('swarm-3q', 1749, 817, 'Rendering of a SWARM-N aircraft'), cut('swarm-top', 1755, 1589, 'Top view rendering of a SWARM-N aircraft'), cut('swarm-exploded', 1815, 1167, 'Exploded rendering of a SWARM-N aircraft'), [4, 5, 7]),
+  machine('overhead', 'h', ch[5], cut('overhead-3q', 813, 1233, 'Rendering of OVERHEAD-H holding a hose'), cut('overhead-side', 795, 1451, 'Side view rendering of OVERHEAD-H with its hose'), cut('overhead-exploded', 817, 1401, 'Exploded rendering of OVERHEAD-H'), [3, 4, 5, 7]),
   { id: 'harbormaster', l: 't', all: 1, wide: 1, name: 'Harbormaster', place: 'Fleet software', line: HM.title, tabs: [
-    { t: 'Board', left: sub('Lose contact with an aircraft and its refill station stays reserved until a person confirms it\'s down.'), right: '<div class="wid"></div>', after: widget('board') },
-    { t: 'Fleet', left: sub(HM.fleet.body), right: '<div class="wid"></div>', after: widget('fleet') },
-    { t: 'Interlock', left: sub('Try to turn the water on when it shouldn\'t be. It runs here in the browser and isn\'t connected to any hardware.'), right: '<div class="wid"></div>', after: widget('interlock') },
-    { t: 'Rules', left: sub('Assigns aircraft, pilots, zones and refill stations so nothing gets booked twice.'), right: `<ul class="rules">${HM.pillars.map(([t, b]) => `<li><h2>${t}</h2><p>${b}</p></li>`).join('')}</ul>` },
+    { t: 'What it is', left: sub(HM.plain) + `<p class="lab noteh">What it does</p><ul class="rows tight">${HM.does.map(li).join('')}</ul>${fine(HM.demoNote)}`, right: `<ul class="rules">${HM.pillars.map(([t, b]) => `<li><h3>${t}</h3><p>${b}</p></li>`).join('')}</ul>` },
+    { t: 'Try the board', h: 'What happens when an aircraft goes quiet.', left: sub(HM.board.body) + `<p class="lab noteh">Try it</p><ol class="steps">${HM.tryIt.map(li).join('')}</ol>`, right: '<div class="wid"></div>', after: widget('board') },
+    { t: 'Fleet size', h: HM.fleet.title, left: sub(HM.fleetPlain), right: '<div class="wid"></div>', after: widget('fleet') },
+    { t: 'Water switch', h: HM.payload.title, left: sub(HM.switchPlain) + `<ul class="rows tight">${HM.switchRules.map(li).join('')}</ul>${fine('It runs here in the browser and isn\'t connected to any hardware.')}`, right: '<div class="wid"></div>', after: widget('interlock') },
   ] },
   { id: 'status', l: 't', wide: 1, name: 'Status', place: 'Where things stand', line: ST.title, tabs: [
     { t: 'Today', left: sub('The rest of this site shows where we\'re going. This table shows where we are.'), right: `<table class="dep"><caption class="vh">What exists today</caption><thead class="vh"><tr><th scope="col">Item</th><th scope="col">Detail</th><th scope="col">Status</th></tr></thead><tbody>${ST.rows.map(([a, b, t]) => `<tr><th scope="row">${a}</th><td>${b}</td><td>${tag(t)}</td></tr>`).join('')}</tbody></table>` },
-    { t: 'Numbers', right: `<dl class="big four">${ST.stats.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>` },
-    { t: 'Next gates', left: sub(ST.gatesTitle), right: `<ol class="rules three">${ST.gates.map(([g, t, b]) => `<li><p class="lab">${g}</p><h2>${t}</h2><p>${b}</p></li>`).join('')}</ol>` },
+    { t: 'Numbers', h: 'By the numbers.', left: sub('Counted from the design files and the test suite as they stand.'), right: `<dl class="big four">${ST.stats.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>` },
+    { t: 'Next gates', h: ST.gatesTitle, right: `<ol class="rules three">${ST.gates.map(([g, t, b]) => `<li><p class="lab">${g}</p><h3>${t}</h3><p>${b}</p></li>`).join('')}</ol>`, cls: 'full' },
   ] },
-  { id: 'crew', l: 't', wide: 1, name: 'Crew', place: 'Station staff', crew: 1 },
+  { id: 'crew', l: 't', wide: 1, name: 'Crew', place: 'Station staff', line: 'The people behind the work.', crew: 1 },
   { id: 'origin', l: 't', wide: 1, name: 'Origin', place: 'How we got here', line: O.title, tabs: [
-    { t: 'Timeline', left: sub('Baltimore Dynamics grew out of the Northrop Grumman Innovation Lab at the University of Maryland. Northrop Grumman backs the company.'), right: `<ol class="tt">${O.timeline.map(([d, t, b], i) => `<li class="${i === O.timeline.length - 1 ? 'on' : ''}"><button type="button"><time>${d}</time><b>${t}</b></button><p>${b}</p></li>`).join('')}</ol>`, after: (r) => $$('.tt button', r).forEach((b) => b.addEventListener('click', () => { $$('.tt li', r).forEach((x) => x.classList.remove('on')); b.parentNode.classList.add('on'); })) },
-    { t: 'The story', right: `<div class="prose">${O.paras.map((p) => `<p>${p}</p>`).join('')}</div>` },
+    { t: 'Timeline', left: sub('Baltimore Dynamics grew out of the Northrop Grumman Innovation Lab at the University of Maryland. Northrop Grumman backs the company.'), right: `<ol class="tt">${O.timeline.map(([d, t, b]) => `<li><p class="tt-r"><time>${d}</time><b>${t}</b></p><p>${b}</p></li>`).join('')}</ol>` },
+    { t: 'The story', h: 'The story.', left: `<div class="prose">${O.paras.map((p) => `<p>${p}</p>`).join('')}</div>`, right: pic(photo('flagwall', C.log.photos[5].alt), '', C.log.photos[5].cap) },
   ] },
   { id: 'log', l: 't', wide: 1, name: 'Field log', place: 'Real photographs', line: C.log.title, log: 1 },
-  { id: 'contact', l: 't', name: 'Contact', place: C.contact.place, line: C.contact.title, tabs: [{ left: sub(C.contact.body), right: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>` }] },
+  { id: 'contact', l: 't', name: 'Contact', place: C.contact.place, line: C.contact.title, tabs: [{ t: 'Contact', left: sub(C.contact.body) + BACKEDX, right: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>` }] },
 ];
 const num = (i) => String(i + 1).padStart(2, '0');
 const hd = $('#hd'), view = $('#view'), root = document.documentElement;
@@ -85,12 +109,14 @@ const LINE = C.hero.line1 + ' ' + C.hero.line2;
 
 /* ---------- the map ---------- */
 const XY = { wheel: [170, 190], boat: [430, 190], bay: [690, 190], rover: [520, 350], swarm: [520, 430], overhead: [520, 510], harbormaster: [980, 430], status: [1180, 430], crew: [1335, 430], origin: [1180, 240], log: [1335, 620], contact: [1500, 430] };
-const LB = { wheel: [146, 146, 'start'], boat: [406, 146, 'start'], bay: [666, 146, 'start'], rover: [484, 361, 'end'], swarm: [484, 441, 'end'], overhead: [484, 521, 'end'], harbormaster: [918, 546, 'start'], status: [1180, 500, 'middle'], crew: [1335, 382, 'middle'], origin: [1216, 251, 'start'], log: [1371, 631, 'start'], contact: [1500, 378, 'middle'] };
+const LB = { wheel: [146, 146, 'start'], boat: [406, 146, 'start'], bay: [666, 146, 'start'], rover: [484, 361, 'end'], swarm: [484, 441, 'end'], overhead: [484, 521, 'end'], harbormaster: [980, 574, 'middle'], status: [1180, 500, 'middle'], crew: [1335, 382, 'middle'], origin: [1216, 251, 'start'], log: [1371, 631, 'start'], contact: [1500, 378, 'middle'] };
+/* Labels that sit above their station: the name lifts to make room for the line that says what the stop is */
+const UP = { wheel: 1, boat: 1, bay: 1, crew: 1, contact: 1 };
 const LP = { w: 'M170 190H740L980 430', r: 'M520 350H900L980 430', n: 'M520 430H980', h: 'M520 510H900L980 430' };
 function mapSVG() {
   const train = (k, d, dur, b) => reduced ? '' : `<circle r="7" fill="#fff"><animateMotion dur="${dur}s" begin="-${b}s" repeatCount="indefinite" path="${d}H1500"/></circle>`;
   const nodes = STOPS.map((s, i) => { const [x, y] = XY[s.id], [lx, ly, a] = LB[s.id], hm = s.id === 'harbormaster', end = s.id === 'contact';
-    return `<a class="st st-${s.l}" href="#${s.id}" data-i="${i}" aria-label="Stop ${i + 1}, ${s.name}">${hm ? `<rect class="ring" x="${x - 27}" y="${y - 50}" width="54" height="100" rx="27"/>` : `${end ? `<circle class="halo" cx="${x}" cy="${y}" r="34"/>` : ''}<circle class="ring" cx="${x}" cy="${y}" r="25"/>`}<text class="no" x="${x}" y="${y + 7}" text-anchor="middle">${num(i)}</text><text class="nm${hm ? ' big' : ''}" x="${lx}" y="${ly}" text-anchor="${a}">${s.name}</text></a>`; }).join('');
+    return `<a class="st st-${s.l}" href="#${s.id}" data-i="${i}" aria-label="Stop ${i + 1}, ${s.name}">${hm ? `<rect class="ring" x="${x - 27}" y="${y - 50}" width="54" height="100" rx="27"/>` : `${end ? `<circle class="halo" cx="${x}" cy="${y}" r="34"/>` : ''}<circle class="ring" cx="${x}" cy="${y}" r="25"/>`}<text class="no" x="${x}" y="${y + 7}" text-anchor="middle">${num(i)}</text><text class="nm${hm ? ' big' : ''}${UP[s.id] ? ' up' : ''}" x="${lx}" y="${ly}" text-anchor="${a}">${s.name}</text><text class="ds" x="${lx}" y="${ly + (UP[s.id] ? 3 : hm ? 30 : 25)}" text-anchor="${a}" aria-hidden="true">${s.place}</text></a>`; }).join('');
   return `<svg class="mp" viewBox="0 0 1600 820" preserveAspectRatio="xMidYMid meet" role="group" aria-label="BD Line map">
   <g class="eyes" aria-hidden="true"><circle cx="52" cy="190" r="29"/><circle cx="114" cy="190" r="29"/><circle class="pu" cx="52" cy="190" r="13"/><circle class="pu" cx="114" cy="190" r="13"/></g>
   <g class="ln ln-w"><path d="${LP.w}" stroke="var(--w)"/></g>
@@ -112,11 +138,6 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const easeIO = (t) => { t = clamp01(t); return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
 const QA = root.classList.contains('qa');
 const narrow = () => innerWidth <= 860;
-const BACKERS = [
-  { name: 'Northrop Grumman', href: 'https://www.northropgrumman.com/', src: 'shared/logos/northrop-grumman.svg', w: 1010, h: 231, cls: 'ng' },
-  { name: 'Mr. Trash Wheel', href: 'https://www.mrtrashwheel.com/', src: 'shared/logos/mr-trash-wheel.webp', w: 440, h: 120, cls: 'mtw' },
-];
-const BACKED = `<div class="bk"><span>Backed by</span>${BACKERS.map((b) => `<a class="bk-${b.cls}" href="${b.href}" target="_blank" rel="noopener"><img src="${b.src}" width="${b.w}" height="${b.h}" alt="${b.name}"><span class="vh"> (opens their website)</span></a>`).join('')}</div>`;
 
 /* The dead zone, as Noir drew it: runoff, bloom, die-off, the fish leave, then the boat comes to measure. */
 const DZSTEPS = ['Fertilizer and stormwater runoff feed algae blooms.', 'When the algae die, bacteria use up the oxygen in the water and fish can\'t stay.', 'Our first machines were built to find those places before they spread: a boat that could hold its position against the current, sensors that didn\'t need a person standing over them, and a record that scientists could check.'];
@@ -131,11 +152,11 @@ const RIDE = {
   rover: { pin: 'ex' },
   swarm: { pin: 'ex' },
   overhead: { pin: 'ex' },
-  harbormaster: { html: '<div class="wid"></div>', after: widget('board'), cta: 'Open Harbormaster' },
+  harbormaster: { html: '<div class="wid"></div>', after: widget('board'), cta: 'See how Harbormaster works', extra: sub(HM.plain), blurb: HM.short },
   status: { html: `<dl class="big four">${ST.stats.map(([a, b]) => `<div><dt data-n="${a.replace(/\D/g, '')}">${a}</dt><dd>${b}</dd></div>`).join('')}</dl>`, cta: 'See what exists today' },
-  crew: { wide: 1, line: 'The people behind the work.', html: `<ul class="crw">${PEOPLE.map((p) => `<li><a href="#crew">${photo(p.photo.src, p.photo.alt)}<b>${p.name}</b><span>${p.role}</span></a></li>`).join('')}</ul>`, cta: 'Meet the crew' },
+  crew: { wide: 1, line: 'The people behind the work.', html: `<ul class="crw">${PEOPLE.map((p, k) => `<li><a href="#crew" data-k="${k}">${photo(p.photo.src, p.photo.alt)}<b>${p.name}</b><span>${p.role}</span></a></li>`).join('')}</ul>`, cta: 'Meet the crew' },
   origin: { wide: 1, html: `<ol class="otl">${O.timeline.map(([d, t]) => `<li><i></i><time>${d}</time><b>${t}</b></li>`).join('')}</ol>`, cta: 'Read the story' },
-  log: { html: `<div class="mos">${C.log.photos.map((p) => `<a href="#log">${photo(p.src, p.alt)}</a>`).join('')}</div>`, cta: 'Open the field log' },
+  log: { html: `<div class="mos">${C.log.photos.map((p, k) => `<a href="#log" data-k="${k}">${thumb(p.src, p.alt)}</a>`).join('')}</div>`, cta: 'Open the field log' },
   contact: { extra: sub(C.contact.body) + BACKED, html: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>`, cta: false },
 };
 const bullets = (s) => (s.all ? ['w', 'r', 'n', 'h'] : s.l === 't' ? [] : [s.l]).map((b) => `<i class="bu ${b}">${b.toUpperCase()}</i>`).join('');
@@ -256,7 +277,7 @@ function deadZone(sec, src) {
 /* The home page is built once and kept, so going back to it never rebuilds the drawings. */
 function makeRide(n) {
   const ride = $('#ride', n), svg = $('.track', ride), secs = $$('.rd', ride), byId = (id) => secs[STOPS.findIndex((s) => s.id === id)];
-  let rails = [], railBox = null, A = [], segs = [], cps = [], flat = [], fcum = [], tops = [], pins = [], total = 0, raf = 0, live = false, lastOn = -2, head = null;
+  let rails = [], railBox = null, railOff = null, A = [], segs = [], cps = [], flat = [], fcum = [], tops = [], pins = [], total = 0, raf = 0, live = false, lastOn = -2, head = null;
   const STG = {}, FX = {};
   const off = (p, d) => p.map((q, i) => {
     const nrm = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1; return [-dy / l, dx / l]; };
@@ -318,7 +339,7 @@ function makeRide(n) {
     if (a > 0 && a < total - 1) { const [x, y] = pt(a); head.setAttribute('cx', x.toFixed(1)); head.setAttribute('cy', y.toFixed(1)); head.style.opacity = 1; } else head.style.opacity = 0;
     let on = -1; A.forEach((x, k) => { if (a >= x - 2) on = k; });
     if (on !== lastOn) { secs.forEach((s, k) => s.classList.toggle('on', k <= on)); rails.forEach((r, k) => r.classList.toggle('on', k === on)); lastOn = on; }
-    if (railBox) railBox.classList.toggle('off', top > vh * .6);
+    if (railBox) { const o = top > vh * .6; if (o !== railOff) { railOff = o; railBox.classList.toggle('off', o); railBox.inert = o; } }
     tops.forEach(([t, h], k) => {
       const y = t + top; if (y > vh * 2.2 || y + h < -vh * 1.2) return;
       const id = STOPS[k].id;
@@ -343,7 +364,7 @@ function makeRide(n) {
   if (document.fonts) document.fonts.ready.then(() => live && layout(true));
   return {
     on() {
-      if (live) return; live = true; rails = $$('.hd .rs'); railBox = $('.hd .rail'); lastOn = -2;
+      if (live) return; live = true; rails = $$('.hd .rs'); railBox = $('.hd .rail'); railOff = null; lastOn = -2;
       RIDE.harbormaster.after(byId('harbormaster'));
       addEventListener('scroll', onScroll, { passive: true }); ro.observe(ride);
       secs.forEach((s) => { if (!s.classList.contains('seen')) io.observe(s); });
@@ -361,8 +382,9 @@ const PK_VIS = (s, i) => {
   const V = RIDE[s.id];
   if (V.pin === 'dz') return `<canvas class="dzc" aria-hidden="true"></canvas><i class="dzsh" aria-hidden="true"></i><aside class="o2" aria-hidden="true"><p class="o2r">~7 mg/L</p><p class="o2h">Dissolved oxygen<br><em>Illustration</em></p><div class="o2rail"><i></i></div></aside><ol class="dzst">${DZSTEPS.map(li).join('')}</ol>`;
   if (V.pin === 'ex') return FIG(i, s);
-  if (s.id === 'harbormaster') return '<div class="fit"><div class="wid"></div></div>';
-  if (s.id === 'log') return `<div class="pk-photos">${C.log.photos.map((p) => `<a href="#log">${photo(p.src, p.alt)}</a>`).join('')}<a class="pk-more" href="#log">All photos<span aria-hidden="true">→</span></a></div>`;
+  if (s.id === 'harbormaster') return '<div class="fit" inert aria-hidden="true"><div class="wid"></div></div>';
+  if (s.id === 'log') return `<div class="pk-photos">${C.log.photos.map((p, k) => `<a href="#log" data-k="${k}">${thumb(p.src, p.alt)}</a>`).join('')}<a class="pk-more" href="#log">All photos<span aria-hidden="true">→</span></a></div>`;
+  if (s.id === 'crew') return `<ul class="roster">${PEOPLE.map((p, k) => `<li><a href="#crew" data-k="${k}">${thumb(p.photo.src, p.photo.alt)}<b>${p.name}</b><span>${p.role}</span></a></li>`).join('')}</ul>`;
   if (s.id === 'contact') return `<div class="legal">${BACKED}<p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>`;
   return V.html;
 };
@@ -371,7 +393,7 @@ const pkCard = (s, i) => {
   return `<section class="card l-${s.l} pk-${s.id}${V.pin ? ' ' + V.pin : ''}" data-i="${i + 1}" aria-labelledby="pk-h-${s.id}"${s.id === 'harbormaster' ? ' data-hm' : ''}>
   <p class="kick">${bullets(s)}<span class="n">${num(i)}</span><span>${s.place}</span></p>
   <h2 id="pk-h-${s.id}">${s.name}</h2>
-  ${line ? `<p class="ln2">${line.replace(/(\w+-\w+)/g, '<span class="nw">$1</span>')}</p>` : ''}${s.id === 'contact' ? sub(C.contact.body) : ''}
+  ${line ? `<p class="ln2">${line.replace(/(\w+-\w+)/g, '<span class="nw">$1</span>')}</p>` : ''}${s.id === 'contact' ? sub(C.contact.body) : ''}${V.blurb ? sub(V.blurb) : ''}
   ${V.cta === false ? '' : `<a class="go" href="#${s.id}">${V.cta || `More on ${s.name}`}<span aria-hidden="true">→</span></a>`}
   <div class="cv">${PK_VIS(s, i)}</div></section>`;
 };
@@ -389,6 +411,9 @@ const POCKET = () => `<div class="pk" id="pk">
 function makePocket(n) {
   const deck = $('#deck', n), cards = $$('.card', deck), dots = $$('.pk-dot', n), train = $('.pk-train', n), strip = $('.pk-strip', n), prev = $('.pk-prev', n), next = $('.pk-next', n), N = cards.length;
   const ST = {}, fx = {}; let cur = -1, raf = 0, live = false, t0 = 0, drive = 0, built = false;
+  /* A phone browser's own bars take a fifth of the screen. The first card lays its twelve stops out for the height that is really there (the small viewport, which does not change as the bars come and go). */
+  const pk = $('#pk', n), room = () => { const pr = document.createElement('div'); pr.style.cssText = 'position:absolute;visibility:hidden;width:0;height:100vh;height:100svh'; document.body.append(pr); const h = pr.offsetHeight || innerHeight; pr.remove(); pk.dataset.fit = h >= 640 ? 'two' : 'six'; };
+  room();
   const name = (i) => i <= 0 ? 'Map' : STOPS[i - 1].name;
   const go = (i, now) => { i = Math.max(0, Math.min(N - 1, i)); deck.scrollTo({ left: i * deck.clientWidth, behavior: now || reduced ? 'auto' : 'smooth' }); if (now) setCur(i); };
   /* Stations play on their own when you arrive: the Bay runs its dead zone, the machines come apart. */
@@ -422,19 +447,20 @@ function makePocket(n) {
   const onScroll = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; const W = deck.clientWidth || 1, x = deck.scrollLeft, f = x / Math.max(1, deck.scrollWidth - W); train.style.transform = `translate3d(${(f * strip.clientWidth).toFixed(1)}px,0,0)`; setCur(Math.round(x / W)); }); };
   n.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { go(+b.dataset.go); return; } if (e.target.closest('.pk-prev')) go(cur - 1); else if (e.target.closest('.pk-next')) go(cur < N - 1 ? cur + 1 : 0); });
   deck.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { e.preventDefault(); go(cur + 1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur - 1); } });
-  const ro = new ResizeObserver(() => { if (cur >= 0) deck.scrollLeft = cur * deck.clientWidth; onScroll(); fit(); });
+  const ro = new ResizeObserver(() => { room(); if (cur >= 0) deck.scrollLeft = cur * deck.clientWidth; onScroll(); fit(); });
   return {
     on() { if (live) return; live = true; RIDE.harbormaster.after(cards[STOPS.findIndex((s) => s.id === 'harbormaster') + 1]); deck.addEventListener('scroll', onScroll, { passive: true }); ro.observe(deck); if (cur < 0) setCur(0); else { const i = cur; cur = -1; setCur(i); } onScroll(); (window.requestIdleCallback || setTimeout)(build); },
     off() { live = false; deck.removeEventListener('scroll', onScroll); ro.disconnect(); cancelAnimationFrame(raf); cancelAnimationFrame(drive); raf = drive = 0; },
     inRide() { return cur > 0; },
-    jump(id) { const i = STOPS.findIndex((s) => s.id === id) + 1; if (i < 1) return false; scrollTo(0, 0); go(i, true); return true; },
+    jump(id) { const i = STOPS.findIndex((s) => s.id === id) + 1; if (i < 1) return false; $('#app').scrollIntoView(); go(i, true); return true; },
     destroy() { this.off(); Object.values(ST).forEach((s) => s && s.gone && s.gone()); },
   };
 }
 
 let HOME = null;
 function home() {
-  hd.innerHTML = `<a class="brand" href="#map" aria-label="${C.brand.name}, the map">${C.brand.mark}<span>${C.brand.name}</span></a>${rail(-1).replace('class="rail"', 'class="rail off"')}<span class="sp"></span>${location.hash === '#anime' ? '<a class="lnk" href="#anime">Replay the film</a>' : '<a class="lnk" href="#intro">Replay the intro</a>'}`;
+  hd.innerHTML = `<a class="brand" href="#map" aria-label="${C.brand.name}, the map">${C.brand.mark}<span>${C.brand.name}</span></a>${rail(-1).replace('class="rail"', 'class="rail off"')}<span class="sp"></span>${location.hash === '#anime' ? '<a class="lnk" href="#anime">Replay the film</a>' : `<a class="lnk" href="#intro">${reduced ? 'Back to the start' : 'Replay the intro'}</a>`}`;
+  { const rb = $('.rail', hd); if (rb) rb.inert = true; } /* the rail fades in once you are riding; until then it is out of the tab order too */
   /* Phones get the deck, wider screens get the long ride. Crossing the breakpoint rebuilds it. */
   const mode = narrow() ? 'pk' : 'ride';
   if (HOME && HOME.mode !== mode) { HOME.r.destroy(); HOME.n.remove(); HOME = null; }
@@ -443,64 +469,85 @@ function home() {
     if (mode === 'pk') { n.innerHTML = POCKET(); view.prepend(n); HOME = { n, mode, r: makePocket(n) }; }
     else {
       n.innerHTML = `<section class="home"><h1 class="vh">${C.brand.name} line map</h1>${mapSVG()}${LIST()}<div class="hl"><p id="peek">${LINE}</p>${BACKED}</div>
-  <div class="key"><p><span class="k k-w"></span>On the water<span class="k k-r"></span>Designed<span class="k k-n"></span>Simulated</p><p><a href="#contact">Legal</a></p></div></section>${RIDEHTML()}`;
+  <div class="key"><p><span class="k k-w"></span>On the water<span class="k k-r"></span>Designed<span class="k k-n"></span><span class="k k-h"></span>Simulated</p><p><a href="#contact">Legal</a></p></div></section>${RIDEHTML()}`;
       view.prepend(n); HOME = { n, mode, r: makeRide(n) };
     }
   }
   showHome(true);
-  const p = $('#peek'); if (p) p.textContent = LINE;
+  peek(LINE);
   HOME.r.on();
   document.title = C.brand.name;
 }
-view.addEventListener('pointerover', (e) => { const a = e.target.closest && e.target.closest('.st'), p = $('#peek'); if (p) p.textContent = a ? (STOPS[a.dataset.i].line || STOPS[a.dataset.i].name) : LINE; });
-view.addEventListener('focusin', (e) => { const a = e.target.closest && e.target.closest('.st'), p = $('#peek'); if (a && p) p.textContent = STOPS[a.dataset.i].line || STOPS[a.dataset.i].name; });
+/* Hyphenated words in the headline never break across lines */
+const peek = (t) => { const p = $('#peek'); if (p) p.innerHTML = t.replace(/(\w+-\w+)/g, '<span class="nw">$1</span>'); };
+view.addEventListener('pointerover', (e) => { const a = e.target.closest && e.target.closest('.st'); peek(a ? (STOPS[a.dataset.i].line || STOPS[a.dataset.i].name) : LINE); });
+view.addEventListener('focusin', (e) => { const a = e.target.closest && e.target.closest('.st'); if (a) peek(STOPS[a.dataset.i].line || STOPS[a.dataset.i].name); });
 
 /* ---------- a stop ---------- */
 const rail = (cur) => `<nav class="rail" aria-label="All stops">${STOPS.map((s, i) => `<a class="rs l-${s.l}${i === cur ? ' on' : ''}" href="#${s.id}" aria-label="${s.name}"${i === cur ? ' aria-current="page"' : ''}><i></i><span>${s.name}</span></a>`).join('')}</nav>`;
 const fresh = (el) => { el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
-function paintTab(s, k) {
-  const t = s.tabs[k], l = $('#lft'), r = $('#rgt');
-  l.innerHTML = t.left || ''; r.innerHTML = t.right || '';
-  $$('.tab').forEach((b, i) => b.setAttribute('aria-selected', String(i === k)));
-  fresh(l); fresh(r);
-  if (t.after) t.after(r, l);
+function crewSecs() {
+  const L = PE.lead, all = [{ ...L }, ...PE.crew.map((p) => ({ ...p, paras: [p.body] }))];
+  const face = (p, lead) => `<figure class="portrait${p.photo.src === 'mike' ? ' low' : ''}">${photo(p.photo.src, p.photo.alt)}${lead ? photo(L.easter.src, L.easter.alt, 'duckimg') + `<figcaption>${L.easter.cap}</figcaption>` : ''}</figure>`;
+  return [
+    { t: 'Everyone', left: `<ul class="roster">${all.map((p, k) => `<li><button type="button" data-sec="${k + 1}">${thumb(p.photo.src, '')}<b>${p.name}</b><span>${p.role}</span></button></li>`).join('')}</ul>`, right: pic(photo('yacht', C.log.photos[1].alt), '', C.log.photos[1].cap) },
+    ...all.map((p, k) => ({ t: p.name.split(' ')[0], h: k ? p.name : 'Tyler <button type="button" class="duck" aria-pressed="false" aria-label="Duck">“Duck”</button> Duckett',
+      left: `<p class="lab">${p.role}</p>${sub(p.paras[0])}${p.paras.slice(1).map((x) => `<p class="note">${x}</p>`).join('')}`, right: face(p, !k),
+      after: k ? null : (v, b) => { const d = $('.duck', b.parentNode); if (d) d.addEventListener('click', () => { const on = $('.portrait', v).classList.toggle('is-duck'); d.setAttribute('aria-pressed', String(on)); }); } })),
+  ];
 }
-function crew() {
-  const L = PE.lead, all = [{ ...L, body: L.paras[0], extra: L.paras.slice(1) }, ...PE.crew], l = $('#lft'), r = $('#rgt');
-  const paint = (i) => {
-    const p = all[i], lead = i === 0;
-    r.innerHTML = `<figure class="portrait${p.photo.src === 'mike' ? ' low' : ''}">${photo(p.photo.src, p.photo.alt)}${lead ? photo(L.easter.src, L.easter.alt, 'duckimg') : ''}${lead ? `<figcaption>${L.easter.cap}</figcaption>` : ''}</figure>`;
-    $('.who', l).innerHTML = `<h2>${lead ? `Tyler <button type="button" class="duck" aria-pressed="false" aria-label="Duck">“Duck”</button> Duckett` : p.name}</h2><p class="lab">${p.role}</p>${sub(p.body)}${p.extra ? more('More', p.extra.map((x) => `<p>${x}</p>`).join('')) : ''}`;
-    $$('.thumb', l).forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
-    const d = $('.duck', l); if (d) d.addEventListener('click', () => { const on = $('.portrait', r).classList.toggle('is-duck'); d.setAttribute('aria-pressed', String(on)); });
-    fresh(r);
-  };
-  l.innerHTML = `<div class="who"></div><div class="thumbs">${all.map((p, i) => `<button type="button" class="thumb" aria-label="${p.name}">${photo(p.photo.src, '')}</button>`).join('')}</div>`;
-  $$('.thumb', l).forEach((b, i) => b.addEventListener('click', () => paint(i)));
-  paint(0); fresh(l);
+const logSecs = () => [{ t: 'Photos', left: sub('Real photographs from the boat, the Bay and the lab.'), right: `<div class="shots">${C.log.photos.map((p, k) => `<figure id="ph-${k}">${photo(p.src, p.alt)}<figcaption>${p.cap}</figcaption></figure>`).join('')}</div>`, cls: 'full' }];
+const sections = (s) => (s.crew ? crewSecs() : s.log ? logSecs() : s.tabs);
+/* Which person or photo was clicked on the home page, so its stop opens at that one */
+let pick = 0;
+document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[data-k]'); pick = a ? +a.dataset.k : 0; }, true);
+
+/* A stop is one page you read by scrolling. Past its last section a strip names the next stop; keep scrolling through it and you ride on. */
+let armed = false, riding = false, lockUntil = 0, stopRaf = 0;
+function stopScroll() {
+  stopRaf = 0; if (cur < 0) return;
+  const max = document.documentElement.scrollHeight - innerHeight, y = scrollY, bar = $('.band .trk b', stopBox), nu = $('.nextup', stopBox);
+  if (bar) bar.style.transform = `scaleX(${max > 4 ? clamp01(y / max).toFixed(4) : 0})`;
+  if (!nu) return;
+  const r = nu.getBoundingClientRect(), k = clamp01((innerHeight - r.top) / Math.max(1, r.height));
+  nu.style.setProperty('--k', k.toFixed(3));
+  /* Only someone who scrolled down through the strip rides on: a jump straight to the bottom (the End key, a dragged scrollbar) does not */
+  if (k < .02) armed = false; else if (k > .1 && k < .93) armed = true;
+  if (armed && !riding && performance.now() > lockUntil && max > 4 && y >= max - 1) { riding = true; armed = false; location.hash = nu.getAttribute('href').slice(1); }
 }
-function log() {
-  const P = C.log.photos, l = $('#lft'), r = $('#rgt');
-  const paint = (i) => { r.innerHTML = pic(photo(P[i].src, P[i].alt), '', P[i].cap); $$('.thumb', l).forEach((b, j) => b.setAttribute('aria-pressed', String(j === i))); fresh(r); };
-  l.innerHTML = `<div class="thumbs many">${P.map((p, i) => `<button type="button" class="thumb" aria-label="${p.cap}">${photo(p.src, '')}</button>`).join('')}</div>`;
-  $$('.thumb', l).forEach((b, i) => b.addEventListener('click', () => paint(i)));
-  paint(0); fresh(l);
+addEventListener('scroll', () => { if (cur >= 0 && !stopRaf) stopRaf = requestAnimationFrame(stopScroll); }, { passive: true });
+const eat = (e) => e.preventDefault();
+function settle() {
+  const touch = matchMedia('(pointer: coarse)').matches;
+  if (touch) root.style.overflow = 'hidden'; else addEventListener('wheel', eat, { passive: false });
+  setTimeout(() => { if (touch) root.style.overflow = ''; else removeEventListener('wheel', eat); if (cur >= 0) scrollTo(0, 0); }, touch ? 340 : 420);
 }
 function stop(i, dir) {
-  const s = STOPS[i], p = STOPS[i - 1], n = STOPS[i + 1];
+  const s = STOPS[i], p = STOPS[i - 1], n = STOPS[i + 1], S = sections(s);
   hd.innerHTML = `<a class="brand" href="#map" aria-label="${C.brand.name}, back to the map">${C.brand.mark}<span>${C.brand.name}</span></a>${rail(i)}<span class="sp"></span><a class="lnk" href="#map">Map</a>`;
   const bullets = s.all ? ['w', 'r', 'n', 'h'] : s.l === 't' ? [] : [s.l];
   showHome(false);
-  stopBox.innerHTML = `<article class="stop l-${s.l}${s.wide ? ' wide' : ''} ${dir < 0 ? 'bwd' : 'fwd'}" data-id="${s.id}"${s.id === 'harbormaster' ? ' data-hm' : ''}>
-    <header class="sign"><p class="sp2">${bullets.map((b) => `<i class="bu ${b}">${b.toUpperCase()}</i>`).join('')}<span>${num(i)}</span>${s.place ? `<span class="pl">${s.place}</span>` : ''}</p><h1>${s.name}</h1>${s.line ? `<p class="ln1">${s.line}</p>` : ''}</header>
-    ${s.tabs && s.tabs.length > 1 ? `<div class="tabs" role="tablist">${s.tabs.map((t) => `<button type="button" class="tab" role="tab">${t.t}</button>`).join('')}</div>` : ''}
-    <div class="lft" id="lft"></div><div class="rgt" id="rgt"></div>
+  const jump = S.length > 1 ? `<nav class="tabs" aria-label="On this page">${S.map((x, k) => `<button type="button" class="tab" data-sec="${k}"${k ? '' : ' aria-current="true"'}>${x.t}</button>`).join('')}</nav>` : '';
+  const sign = `<header class="sign"><p class="sp2">${bullets.map((b) => `<i class="bu ${b}">${b.toUpperCase()}</i>`).join('')}<span>${num(i)}</span>${s.place ? `<span class="pl">${s.place}</span>` : ''}${s.st ? tag(s.st) : ''}</p><h1>${s.name}</h1>${s.line ? `<p class="ln1">${s.line.replace(/(\w+-\w+)/g, '<span class="nw">$1</span>')}</p>` : ''}${jump}</header>`;
+  const sec = (x, k) => `<section class="sec${k ? '' : ' first'}${x.right ? '' : ' solo'}${x.cls ? ' ' + x.cls : ''}" id="sec-${k}"${k ? ` aria-labelledby="sec-h-${k}"` : ''}>${k ? `<h2 class="sec-h" id="sec-h-${k}">${x.h || x.t}</h2>` : sign}${x.left ? `<div class="sec-b">${x.left}</div>` : ''}${x.right ? `<div class="sec-v">${x.right}</div>` : ''}</section>`;
+  stopBox.innerHTML = `<article class="stop l-${s.l}${s.wide ? ' wide' : ''} ${dir < 0 ? 'bwd' : 'fwd'}" data-id="${s.id}"${s.id === 'harbormaster' ? ' data-hm' : ''}>${S.map(sec).join('')}
+    <a class="nextup l-${n ? n.l : 't'}" href="#${n ? n.id : 'map'}"><span class="nu-k">${n ? 'Next stop' : 'End of the line'}</span><span class="nu-n">${n ? `<i>${num(i + 1)}</i>${n.name}` : 'Back to the map'}</span>${n && n.line ? `<span class="nu-l">${n.line}</span>` : ''}<span class="nu-go" aria-hidden="true"><i></i>Keep scrolling</span></a>
   </article>
   <nav class="band l-${s.l}" aria-label="Along the line"><a class="bd prev" href="#${p ? p.id : 'map'}"><span aria-hidden="true">←</span>${p ? p.name : 'Map'}</a><span class="trk" aria-hidden="true"><b></b></span><a class="bd next" href="#${n ? n.id : 'map'}">${n ? n.name : 'Map'}<span aria-hidden="true">→</span></a></nav>`;
-  if (s.tabs) { paintTab(s, 0); $$('.tab').forEach((b, k) => b.addEventListener('click', () => paintTab(s, k))); }
-  else if (s.crew) crew(); else if (s.log) log();
+  S.forEach((x, k) => { if (x.after) x.after($(`#sec-${k} .sec-v`, stopBox), $(`#sec-${k} .sec-b`, stopBox)); });
+  $$('.sec.first .sec-b, .sec.first .sec-v', stopBox).forEach(fresh);
+  /* Jump links, and which section you are in */
+  const tabs = $$('.tab', stopBox), secs = $$('.sec', stopBox);
+  stopBox.onclick = (e) => { const b = e.target.closest('[data-sec]'); if (b && secs[+b.dataset.sec]) secs[+b.dataset.sec].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); };
+  if (tabs.length && 'IntersectionObserver' in window) { const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) tabs.forEach((t, k) => { if (k === secs.indexOf(e.target)) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current'); }); }), { rootMargin: '-45% 0px -50% 0px' }); secs.forEach((x) => io.observe(x)); }
   document.title = `${s.name} · ${C.brand.name}`;
   view.focus({ preventScroll: true });
+  /* Arriving by riding on: the scroll that carried you here stops at the top of the new stop instead of running on down it */
+  if (riding) settle();
+  armed = false; riding = false; lockUntil = performance.now() + 900;
+  /* Arriving from a person or a photo on the home page opens on that one */
+  if (pick > 0) { const t = s.crew ? secs[pick + 1] : s.log ? $('#ph-' + pick, stopBox) : null; pick = 0; if (t) requestAnimationFrame(() => t.scrollIntoView({ block: s.crew ? 'start' : 'center' })); }
+  requestAnimationFrame(stopScroll);
   if (n && n.tabs) { const m = /src="([^"]+)"/.exec(n.tabs[0].right || ''); if (m) new Image().src = m[1]; }
 }
 
@@ -567,9 +614,10 @@ function route() {
     if (!(ret && HOME.r.jump(ret))) scrollTo(0, 0);
     return;
   }
-  const wasOff = root.classList.contains('bdi-off');
-  root.classList.remove('bdi-off'); cur = -1; goHome();
+  const wasOff = root.classList.contains('bdi-off'), back = cur >= 0 && fromRide && h === 'after-intro' ? STOPS[cur].id : null;
+  root.classList.remove('bdi-off'); cur = -1; fromRide = false; goHome();
   if (wasOff) dispatchEvent(new Event('resize'));
+  if (back && HOME.r.jump(back)) return;
   if (h === 'intro') scrollTo(0, 0);
   if (h === 'after-intro') { const a = document.getElementById('after-intro'); if (a) a.scrollIntoView(); }
 }
@@ -590,6 +638,8 @@ if (OPEN) {
   };
   root.classList.add('has-op'); /* its stylesheet is already in the head, written there before first paint */
   const js = document.createElement('script'); js.src = `openers/${OPEN}.js`; document.head.append(js);
+  /* If the opener never arrives, the site carries on without it instead of waiting behind its first paint */
+  const drop = () => { if (!$('.op')) delete root.dataset.op; }; js.onerror = drop; setTimeout(drop, 6000);
 }
 /* The backers also open the intro, on its first screen, and fade with it. */
 const backIntro = () => { const l = $('#top .bdi-lede'); if (l && !$('.bk', l)) l.insertAdjacentHTML('afterbegin', BACKED.replace('class="bk"', 'class="bk bdi-bk"')); return !!l; };

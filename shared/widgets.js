@@ -32,7 +32,7 @@ function fleet(root, o) {
     const share = Math.round((waited / (n * T_END)) * 100);
     q("[data-note]").textContent = share > 20 ? `Aircraft spend ${share}% of the window waiting for a station. Add a station before adding aircraft.` : `Aircraft wait ${share}% of the window. Stations are keeping up.`;
     const dpr = Math.min(devicePixelRatio || 1, 2), w = c.clientWidth || 560, rowH = 18, gap = 6, h = n * (rowH + gap) + 26; c.width = w * dpr; c.height = h * dpr; c.style.height = h + "px";
-    const x = c.getContext("2d"); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, h); const left = 34, sc = (w - left) / T_END; x.font = "11px " + P.mono; x.textBaseline = "middle";
+    const x = c.getContext("2d"); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, w, h); const left = 34, sc = (w - left) / T_END; x.font = "12px " + P.mono; x.textBaseline = "middle";
     r.tracks.forEach((t, i) => { const y = i * (rowH + gap); x.fillStyle = P.dim; x.fillText("A" + (i + 1), 0, y + rowH / 2); t.forEach((k) => { const A = Math.min(k[1], T_END), B = Math.min(k[2], T_END); if (B <= A) return; x.fillStyle = COL[k[0]]; x.fillRect(left + A * sc, y, Math.max(1, (B - A) * sc - 1), rowH); }); });
     x.fillStyle = P.dim; const step = w < 520 ? 5 : 2; for (let m = 0; m <= 10; m += step) { x.textAlign = m === 10 ? "right" : m === 0 ? "left" : "center"; x.fillText(m + " min", left + m * 60 * sc, h - 9); } x.textAlign = "left";
   };
@@ -68,9 +68,10 @@ function drawBoard(c, s, t, P) {
   const px = (u) => u.x * w, py = (u) => u.y * h;
   x.setLineDash([3, 5]); x.strokeStyle = P.accent; x.globalAlpha = 0.55; STATIONS.forEach((st) => { x.beginPath(); x.moveTo(px(st), py(st)); x.lineTo(px(FIRE), py(FIRE)); x.stroke(); }); x.setLineDash([]); x.globalAlpha = 1;
   const pulse = (Math.sin(t * 3) + 1) / 2; x.strokeStyle = P.ember; [0.09, 0.13 + pulse * 0.02].forEach((r, i) => { x.globalAlpha = i ? 0.45 : 1; x.beginPath(); x.ellipse(px(FIRE), py(FIRE), r * w * 0.8, r * h, 0, 0, 7); x.stroke(); }); x.globalAlpha = 1; x.fillStyle = P.ember; x.beginPath(); x.arc(px(FIRE), py(FIRE), 4 + pulse * 2, 0, 7); x.fill();
-  x.font = "11px " + P.mono; x.textBaseline = "middle";
-  STATIONS.forEach((st, i) => { const on = s.held[i], C = on ? P.ember : P.accent; x.strokeStyle = C; x.globalAlpha = 0.2; x.fillStyle = C; x.fillRect(px(st) - 11, py(st) - 11, 22, 22); x.globalAlpha = 1; x.strokeRect(px(st) - 11, py(st) - 11, 22, 22); x.fillText(st.name + (on ? " HELD" : ""), px(st) + 16, py(st)); });
-  s.units.forEach((u) => { if (u.phase === "grounded") return; const lost = u.phase === "lost", X = px(u), Y = py(u); x.strokeStyle = lost ? P.ember : P.accent; x.lineWidth = 1.6; x.beginPath(); x.moveTo(X - 6, Y - 6); x.lineTo(X + 6, Y + 6); x.moveTo(X + 6, Y - 6); x.lineTo(X - 6, Y + 6); x.stroke(); x.lineWidth = 1; [[-6, -6], [6, 6], [6, -6], [-6, 6]].forEach((o) => { x.beginPath(); x.arc(X + o[0], Y + o[1], 3, 0, 7); x.stroke(); }); x.fillStyle = lost ? P.ember : P.fg; x.fillText(u.id, X + 12, Y - 8); if (u.phase === "spray") { x.strokeStyle = P.water; x.beginPath(); x.moveTo(X, Y); x.lineTo(px(FIRE), py(FIRE)); x.stroke(); } });
+  x.font = "12px " + P.mono; x.textBaseline = "middle";
+  const placed = [], lab = (txt, lx, ly) => { const tw = x.measureText(txt).width; let yy = ly, n = 0; while (n++ < 7 && placed.some((r) => lx < r[0] + r[2] + 4 && lx + tw + 4 > r[0] && Math.abs(yy - r[1]) < 13)) yy += 13; placed.push([lx, yy, tw]); x.fillText(txt, lx, yy); };
+  STATIONS.forEach((st, i) => { const on = s.held[i], C = on ? P.ember : P.accent; x.strokeStyle = C; x.globalAlpha = 0.2; x.fillStyle = C; x.fillRect(px(st) - 11, py(st) - 11, 22, 22); x.globalAlpha = 1; x.strokeRect(px(st) - 11, py(st) - 11, 22, 22); lab(st.name + (on ? " HELD" : ""), px(st) + 16, py(st)); });
+  s.units.forEach((u) => { if (u.phase === "grounded") return; const lost = u.phase === "lost", X = px(u), Y = py(u); x.strokeStyle = lost ? P.ember : P.accent; x.lineWidth = 1.6; x.beginPath(); x.moveTo(X - 6, Y - 6); x.lineTo(X + 6, Y + 6); x.moveTo(X + 6, Y - 6); x.lineTo(X - 6, Y + 6); x.stroke(); x.lineWidth = 1; [[-6, -6], [6, 6], [6, -6], [-6, 6]].forEach((o) => { x.beginPath(); x.arc(X + o[0], Y + o[1], 3, 0, 7); x.stroke(); }); x.fillStyle = lost ? P.ember : P.fg; lab(u.id, X + 12, Y - 8); if (u.phase === "spray") { x.strokeStyle = P.water; x.beginPath(); x.moveTo(X, Y); x.lineTo(px(FIRE), py(FIRE)); x.stroke(); } });
 }
 function board(root, o) {
   o = o || {}; root.classList.add("bdw", "bdw-board"); let s = fresh();

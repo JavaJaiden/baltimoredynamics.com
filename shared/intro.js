@@ -1371,7 +1371,7 @@ root.innerHTML = `<div class="bdi-descent">
   <div class="bdi-descent__pin">
     <canvas class="bdi-descent__c" aria-hidden="true"></canvas>
     <div class="bdi-descent__fade" aria-hidden="true"></div>
-    <div class="bdi-bar"><span class="bdi-bar__brand"><span class="bdi-mark" aria-hidden="true">${C.brand.mark}</span><span class="bdi-bar__name">${C.brand.name}</span></span><a class="bdi-bar__skip" href="#after-intro">Skip the intro</a></div>
+    <div class="bdi-bar"><span class="bdi-bar__brand"><span class="bdi-mark" aria-hidden="true">${C.brand.mark}</span><span class="bdi-bar__name">${C.brand.name}</span></span><a class="bdi-bar__skip" href="#after-intro">Skip<span class="bdi-bar__x"> the intro</span></a></div>
     <div class="bdi-co-layer" aria-hidden="true">${co("", "Baltimore")}${co("ember", "Low-oxygen zone")}</div>
     <h1 class="bdi-hl" aria-label="Fire above. Water below.">
       <span class="bdi-hl__line bdi-hl__line--a" aria-hidden="true"><span class="bdi-hl__t" data-hl>Fire<br class="bdi-ph"> above<i class="bdi-d-e">.</i></span></span>
@@ -1381,7 +1381,7 @@ root.innerHTML = `<div class="bdi-descent">
       <p class="bdi-lede__note"><span>${hero.note}</span><span class="bdi-lede__hint">Scroll</span></p>
     </div>
     <div class="bdi-street" aria-hidden="true" data-street><span data-street-t>Street level</span></div>
-    <div class="bdi-plates">${beats.map((b, i) => `<article class="bdi-plate" data-plate><div class="bdi-plate__id"><span class="bdi-plate__name">${b.name}</span><span class="plate__st--${b.tone}">${b.status}</span></div><h2 class="bdi-plate__t">${b.title}</h2></article>`).join("")}</div>
+    <div class="bdi-plates">${beats.map((b, i) => `<article class="bdi-plate" data-plate><div class="bdi-plate__id"><span class="bdi-plate__name">${b.name}</span><span class="bdi-plate__st--${b.tone}">${b.status}</span></div><h2 class="bdi-plate__t">${b.title.replace(/(\w+-\w+)/g, '<span style="white-space:nowrap">$1</span>')}</h2></article>`).join("")}</div>
   </div>
 </div><div id="after-intro" class="bdi__end"></div>`;
 
@@ -1443,7 +1443,7 @@ function guard() {
 function apply(p, info) { heroAt(p); plateP(p); if (info) { streetLine(info); guard(); } }
 
 /* The camera path. Six stops in the order the client asked for. */
-const small = innerWidth < 760;
+const small = innerWidth < 760 || innerWidth / innerHeight < 0.8;
 const MAPX = small ? 193.7 : 174;
 /* Each stop is a held shot; between stops the camera moves on one eased arc, so it never lurches. */
 const v3 = (a) => a;
@@ -1488,7 +1488,9 @@ const WHEEL = { x: 204, z: -2, ry: Math.PI }, YACHT = { x: 170, z: 33, ry: 0 }, 
 
 /* An opener can sit over the intro for the first stretch of scroll (--op-lead). The photo opener also needs the camera to start where the photo was taken from. */
 const OPENER = (/[?&]open=(o\d\d)\b/.exec(location.search) || [])[1] || document.documentElement.dataset.opener;
-const MATCH = OPENER === "o11" && !reduced, FOVV = small ? 62 : 46, EYE1 = [203.5, 0.88, -3.63], EYE2 = [203.14, 0.96, -0.37], EYEM = [203.32, 0.92, -2], BLEND = 0.1;
+const MATCH = OPENER === "o11" && !reduced, FOVV = small ? 62 : 46, EYE1 = [203.5, 0.88, -3.63], EYE2 = [203.14, 0.96, -0.37], EYEM = [203.32, 0.92, -2];
+/* The wheel's caption plays over scroll 0.09 to 0.19. The camera holds until HOLD, then leaves for the boat in one move that is done by OUT. */
+const HOLD = 0.185, OUT = 0.25, PUSH = small ? 1.03 : 1.05;
 const mix3 = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
 function solveFit(W, Ht, fov, mid, sep) {
   const { cross, dot, norm } = BD.math, t = 1 / Math.tan(fov * Math.PI / 360), TH = Math.PI / 6, PHI = -Math.PI / 180, U = [-Math.cos(TH) * Math.cos(PHI), Math.sin(PHI), -Math.sin(TH) * Math.cos(PHI)];
@@ -1503,7 +1505,7 @@ function solveFit(W, Ht, fov, mid, sep) {
   }
   return { eye, look: [eye[0] + dir[0] * D, eye[1] + dir[1] * D, eye[2] + dir[2] * D] };
 }
-const fitCam = (() => { let key = "", c = null; return () => { const w = canvas.clientWidth, h = canvas.clientHeight, k = w + "x" + h; if (k !== key) { key = k; const L = BD.wheelFit(w, h); c = solveFit(w, h, FOVV, L.mid, L.sep); } return c; }; })();
+const fitCam = (() => { let key = "", c = null; return () => { const w = canvas.clientWidth, h = canvas.clientHeight, k = w + "x" + h; if (k !== key) { key = k; const L = BD.wheelFit(w, h); c = { a: solveFit(w, h, FOVV, L.mid, L.sep), b: solveFit(w, h, FOVV, L.mid, L.sep * PUSH) }; } return c; }; })();
 let lead = 0;
 function watchLead() { const pr = document.createElement("div"); pr.style.cssText = "position:absolute;left:0;top:0;width:0;height:var(--op-lead,0px);visibility:hidden;pointer-events:none"; root.append(pr); const ms = () => { lead = pr.offsetHeight; }; ms(); new ResizeObserver(ms).observe(pr); }
 
@@ -1529,7 +1531,12 @@ function go() {
       const m = /[?&]cam=([-\d.,]+)/.exec(location.search);
       if (m) { const v = m[1].split(',').map(Number); return () => ({ eye: v.slice(0, 3), look: v.slice(3, 6) }); }
       if (!MATCH) return null;
-      return (q, t, e, l) => { if (q >= BLEND) return null; const c = fitCam(), k = smooth(0, BLEND, q); return { eye: mix3(c.eye, e, k), look: mix3(c.look, l, k) }; };
+      return (q, t, e, l) => {
+        if (q >= OUT) return null;
+        const c = fitCam(), p = smooth(0.03, HOLD, q), eye = mix3(c.a.eye, c.b.eye, p), look = mix3(c.a.look, c.b.look, p);
+        if (q <= HOLD) return { eye, look };
+        const k = smooth(HOLD, OUT, q); return { eye: mix3(eye, e, k), look: mix3(look, l, k) };
+      };
     })(),
   };
   BD.descent(opts);
