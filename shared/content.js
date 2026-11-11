@@ -122,6 +122,7 @@ BD.content = {
       { src: "sensor", alt: "A water sensor rig on a stand in a boat cabin", cap: "Sensor rig, August 2024." }, { src: "flagwall", alt: "The lab workspace with a black, gold, red and white Maryland flag painted across the wall", cap: "The lab." },
       { src: "nightdesk", alt: "Two people working at a wall of monitors at night with harbor lights in the window", cap: "Night shift, harbor view." } ] },
   contact: { title: "Build it with us.", body: "We want to hear from investors, fire departments, utilities and engineers who'd rather work on hard machines.", place: "Baltimore, Maryland", email: "support@narb.cc" },
+  privacy: "This site counts visits with PostHog. It sets no cookies and stores nothing on your device.",
   legal: "Baltimore Dynamics systems are in development and have not been flight-tested or field-tested. Machines on this site are shown as drawings and simulations and do not depict existing hardware. Baltimore Dynamics is backed by Northrop Grumman and Mr. Trash Wheel. Other organizations named on this site describe past work and do not imply endorsement. Military service is listed as biography and does not imply endorsement by the U.S. Marine Corps or Department of Defense. This site is not an offer to sell securities. © 2026 Baltimore Dynamics.",
 };
 /* The five largest photographs are served as smaller WebP files. */

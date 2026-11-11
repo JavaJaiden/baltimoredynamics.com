@@ -2,6 +2,12 @@
 (() => {
 const C = BD.content, ch = C.chapters, O = C.origin, DZ = O.deadZone, TW = O.trashWheel, AE = C.aesv, HM = C.harbormaster, ST = C.status, PE = C.people;
 /* The built site carries every page as plain text in the HTML itself (tools/prerender.mjs). Where it is there, we link to it. */
+/* Visit counts go to PostHog. Its script is added to the head by tools/build-site.py and only runs on the real site, so in tests and
+   previews window.posthog is absent and these do nothing. Each stop counts as a page of its own (/harbormaster), the line as /. */
+let phPath = null, phT = 0; const phSeen = new Set();
+const track = (path, title) => { if (!window.posthog || path === phPath) return; phPath = path; try { window.posthog.capture('$pageview', { $current_url: location.origin + path, $pathname: path, title }); } catch (e) {} };
+/* A stop on the line, or a card on the phone deck, counts as seen once someone has stayed on it for a moment. */
+const dwell = (id, via) => { if (!window.posthog) return; clearTimeout(phT); phT = setTimeout(() => { if (phSeen.has(id)) return; phSeen.add(id); try { window.posthog.capture('stop seen', { stop: id, via }); } catch (e) {} }, 1500); };
 const PLAIN = document.getElementById('text') ? '<p class="plain"><a href="#text">Read the whole site on one plain page</a></p>' : '';
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const sys = (id) => C.systems.items.find((m) => m.id === id);
@@ -100,7 +106,7 @@ const STOPS = [
     { t: 'The story', h: 'The story.', left: `<div class="prose">${O.paras.map((p) => `<p>${p}</p>`).join('')}</div>`, right: pic(photo('flagwall', C.log.photos[5].alt), '', C.log.photos[5].cap) },
   ] },
   { id: 'log', l: 't', wide: 1, name: 'Field log', place: 'Real photographs', line: C.log.title, log: 1 },
-  { id: 'contact', l: 't', name: 'Contact', place: C.contact.place, line: C.contact.title, tabs: [{ t: 'Contact', left: sub(C.contact.body) + MAIL + BACKEDX, right: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p>${PLAIN}</div>` }] },
+  { id: 'contact', l: 't', name: 'Contact', place: C.contact.place, line: C.contact.title, tabs: [{ t: 'Contact', left: sub(C.contact.body) + MAIL + BACKEDX, right: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>${C.privacy}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p>${PLAIN}</div>` }] },
 ];
 const num = (i) => String(i + 1).padStart(2, '0');
 const hd = $('#hd'), view = $('#view'), root = document.documentElement, TXT = $('#text'), TITLE0 = document.title;
@@ -162,7 +168,7 @@ const RIDE = {
   crew: { wide: 1, line: 'The people behind the work.', html: `<ul class="crw">${PEOPLE.map((p, k) => `<li><a href="#crew" data-k="${k}">${photo(p.photo.src, p.photo.alt)}<b>${p.name}</b><span>${p.role}</span></a></li>`).join('')}</ul>`, cta: 'Meet the crew' },
   origin: { wide: 1, html: `<ol class="otl">${O.timeline.map(([d, t]) => `<li><i></i><time>${d}</time><b>${t}</b></li>`).join('')}</ol>`, cta: 'Read the story' },
   log: { html: `<div class="mos">${C.log.photos.map((p, k) => `<a href="#log" data-k="${k}">${thumb(p.src, p.alt)}</a>`).join('')}</div>`, cta: 'Open the field log' },
-  contact: { extra: sub(C.contact.body) + MAIL + BACKED, html: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p>${PLAIN}</div>`, cta: false },
+  contact: { extra: sub(C.contact.body) + MAIL + BACKED, html: `<div class="legal"><span class="mk">${C.brand.mark}</span><p>${C.legal}</p><p>${C.credit}</p><p>${C.privacy}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p>${PLAIN}</div>`, cta: false },
 };
 const bullets = (s) => (s.all ? ['w', 'r', 'n', 'h'] : s.l === 't' ? [] : [s.l]).map((b) => `<i class="bu ${b}">${b.toUpperCase()}</i>`).join('');
 const rideSec = (s, i) => {
@@ -361,7 +367,7 @@ function makeRide(n) {
     for (const s of segs) { const f = clamp01((a - s.a) / s.L); if (Math.abs(f - s.f) > .0005) { s.f = f; const o = (1000 * (1 - f)).toFixed(2); for (const e of s.el) e.style.strokeDashoffset = o; } }
     if (a > 0 && a < total - 1) { const [x, y] = pt(a); head.setAttribute('cx', x.toFixed(1)); head.setAttribute('cy', y.toFixed(1)); head.style.opacity = 1; } else head.style.opacity = 0;
     let on = -1; A.forEach((x, k) => { if (a >= x - 2) on = k; });
-    if (on !== lastOn) { secs.forEach((s, k) => s.classList.toggle('on', k <= on)); rails.forEach((r, k) => r.classList.toggle('on', k === on)); lastOn = on; }
+    if (on !== lastOn) { if (on >= 0) dwell(STOPS[on].id, 'line'); secs.forEach((s, k) => s.classList.toggle('on', k <= on)); rails.forEach((r, k) => r.classList.toggle('on', k === on)); lastOn = on; }
     if (railBox) { const o = top > vh * .6; if (o !== railOff) { railOff = o; railBox.classList.toggle('off', o); railBox.inert = o; } }
     tops.forEach(([t, h], k) => {
       const y = t + top; if (y > vh * 2.2 || y + h < -vh * 1.2) return;
@@ -421,7 +427,7 @@ const PK_VIS = (s, i) => {
   if (V.pin === 'hm') return `<canvas class="hmc" role="img" aria-label="${HMPIC}"></canvas><ol class="hmst">${HM.story.map(li).join('')}</ol>`;
   if (s.id === 'log') return `<div class="pk-photos">${C.log.photos.map((p, k) => `<a href="#log" data-k="${k}">${thumb(p.src, p.alt)}</a>`).join('')}<a class="pk-more" href="#log">All photos<span aria-hidden="true">→</span></a></div>`;
   if (s.id === 'crew') return `<ul class="roster">${PEOPLE.map((p, k) => `<li><a href="#crew" data-k="${k}">${thumb(p.photo.src, p.photo.alt)}<b>${p.name}</b><span>${p.role}</span></a></li>`).join('')}</ul>`;
-  if (s.id === 'contact') return `<div class="legal">${BACKED}<p>${C.legal}</p><p>${C.credit}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>`;
+  if (s.id === 'contact') return `<div class="legal">${BACKED}<p>${C.legal}</p><p>${C.credit}</p><p>${C.privacy}</p><p>Transit map styling is a format only. This company operates no transit service and uses no agency's marks.</p></div>`;
   return V.html;
 };
 const pkCard = (s, i) => {
@@ -470,7 +476,7 @@ function makePocket(n) {
     if (st || cur === 3) drive = requestAnimationFrame(loop);
   }
   function setCur(i) {
-    if (i === cur) return; cur = i; t0 = performance.now();
+    if (i === cur) return; cur = i; t0 = performance.now(); if (i > 0) dwell(STOPS[i - 1].id, 'deck');
     dots.forEach((d, k) => { if (k + 1 === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
     cards.forEach((c, k) => c.setAttribute('aria-hidden', String(k !== i)));
     $('b', prev).textContent = i > 0 ? name(i - 1) : ''; prev.disabled = i === 0;
@@ -673,6 +679,7 @@ const goHome = () => { home(); const r = HOME.r; rideOff = () => r.off(); };
 function route() {
   const h = location.hash.slice(1), i = STOPS.findIndex((s) => s.id === h), txt = !!TXT && (h === 'text' || h.slice(0, 2) === 't-');
   root.classList.toggle('plainv', txt);
+  track(txt ? '/text' : i >= 0 ? '/' + h : '/', txt ? 'The whole site on one page' : i >= 0 ? STOPS[i].name : C.brand.name);
   if (txt) {
     /* The whole site as one plain page (#text, or #t-crew for one part of it). The animated site waits underneath. */
     if (rideOff) { rideOff(); rideOff = null; }
