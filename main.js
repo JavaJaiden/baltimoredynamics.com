@@ -138,7 +138,7 @@ const smooth = (a, b, v) => { const t = clamp01((v - a) / (b - a)); return t * t
 const lerp = (a, b, t) => a + (b - a) * t;
 const easeIO = (t) => { t = clamp01(t); return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
 const QA = root.classList.contains('qa');
-const narrow = () => innerWidth <= 860;
+const narrow = () => innerWidth <= 860 || (innerHeight <= 520 && innerWidth > innerHeight);
 
 /* The dead zone, as Noir drew it: runoff, bloom, die-off, the fish leave, then the boat comes to measure. */
 const DZSTEPS = ['It starts on land. Fertilizer washes into the Bay and feeds algae.', 'When the algae die, bacteria use up the oxygen in the water. Fish and crabs leave or die. That water is now a dead zone.', 'From the surface it looks the same, so it has to be measured. Our first machines were built for that: a boat that could hold its position against the current and sensors that didn\'t need a person standing over them.'];
@@ -197,9 +197,9 @@ function leaders(host, M, stg) {
 }
 /* One exploded drawing per machine, on the shared hidden-line stage. */
 const CAM = {
-  rover: () => ({ camera: narrow() ? { dist: 19.5, yaw: .3, pitch: .14, target: [1.7, 1, 0] } : { dist: 15.5, yaw: .3, pitch: .14, target: [.6, 1, 0] }, distK: .14 }),
-  swarm: () => ({ camera: { dist: narrow() ? 7.6 : 6.6, yaw: .72, pitch: .26 }, distK: .4 }),
-  overhead: () => ({ camera: { dist: narrow() ? 12.6 : 11.2, yaw: .8, pitch: .16, target: [-.1, -.85, .1] }, distK: .28 }),
+  rover: () => ({ camera: innerWidth < 600 ? { dist: 19.5, yaw: .3, pitch: .14, target: [1.7, 1, 0] } : { dist: 15.5, yaw: .3, pitch: .14, target: [.6, 1, 0] }, distK: .14 }),
+  swarm: () => ({ camera: { dist: innerWidth < 600 ? 7.6 : 6.6, yaw: .72, pitch: .26 }, distK: .4 }),
+  overhead: () => ({ camera: { dist: innerWidth < 600 ? 12.6 : 11.2, yaw: .8, pitch: .16, target: [-.1, -.85, .1] }, distK: .28 }),
 };
 function machineStage(sec, id) {
   if (!BD.stage || !BD.models || !BD.models[id]) return null;
@@ -216,7 +216,7 @@ function machineStage(sec, id) {
   let s = null, L = null, e = 0, yawS = 0, yawLast = 0, pS = 0, shown = -1; const tgt = { e: 0, yaw: 0, pitch: 0 };
   const cam = Object.assign({}, M.camera, cfg.camera);
   s = BD.stage({ canvas, parts: M.parts, camera: cam, explode: 0, auto: 0, drag: !narrow(), reveal: false, onFrame() {
-    if (!s) return; const k = QA ? 1 : .1;
+    if (!s) return; const k = QA || reduced ? 1 : .1;
     e = lerp(e, tgt.e, k); yawS = lerp(yawS, tgt.yaw, k); pS = lerp(pS, tgt.pitch, k);
     s.state.yaw += yawS - yawLast; yawLast = yawS;
     s.set({ explode: e, pitch: cam.pitch + pS, dist: cam.dist * (1 + cfg.distK * e) });
@@ -224,7 +224,8 @@ function machineStage(sec, id) {
     const pc = Math.round(e * 100); if (pc !== shown) { shown = pc; if (exp) exp.textContent = pc + '%'; }
   } });
   if (M.labels && M.labels.length) L = leaders(host, M, s);
-  return { set(v) { Object.assign(tgt, v); }, gone() { try { s.destroy(); const gl = canvas.getContext('webgl'); const x = gl && gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); } catch (err) {} } };
+  let still = -1;
+  return { set(v) { Object.assign(tgt, v); if (reduced && s && tgt.e !== still) { still = tgt.e; tgt.yaw = 0; tgt.pitch = 0; s.render(); s.render(); } else if (reduced) { tgt.yaw = 0; tgt.pitch = 0; } }, gone() { try { s.destroy(); const gl = canvas.getContext('webgl'); const x = gl && gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); } catch (err) {} } };
 }
 function deadZone(sec, src) {
   const c = $('.dzc', sec), x = c.getContext('2d'), steps = $$('.dzst li', sec), read = $('.o2r', sec), fill = $('.o2rail i', sec), trk = $('.hold', sec);
@@ -256,7 +257,7 @@ function deadZone(sec, src) {
         const len = drop * wH * .7, names = ['pH', 'Dissolved oxygen', 'Turbidity', 'Temperature'];
         x.strokeStyle = '#ffc20e'; x.lineWidth = 1; x.beginPath(); x.moveTo(bx + 14, by + 5); x.lineTo(bx + 14, by + 5 + len); x.stroke();
         x.font = "600 13px 'Inter Tight', sans-serif"; x.textBaseline = 'middle';
-        names.forEach((n, i) => { const ny = by + 5 + wH * .7 * ((i + 1) / 4.3); if (ny > by + 5 + len) return; const pulse = (t * .7 + i * .3) % 1; x.strokeStyle = `rgba(111,214,198,${((1 - pulse) * .8).toFixed(3)})`; x.beginPath(); x.arc(bx + 14, ny, 5 + pulse * 26, 0, 7); x.stroke(); x.fillStyle = '#6fd6c6'; x.fillRect(bx + 11, ny - 3, 6, 6); const tw = x.measureText(n).width; x.fillStyle = 'rgba(2,9,12,.8)'; x.fillRect(bx + 26, ny - 11, tw + 14, 22); x.fillStyle = '#f4f2ec'; x.fillText(n, bx + 33, ny); });
+        names.forEach((n, i) => { const ny = by + 5 + wH * .7 * ((i + 1) / 4.3); if (ny > by + 5 + len || wH * .163 < 19) return; /* too shallow for the labels to sit apart */ const pulse = (t * .7 + i * .3) % 1; x.strokeStyle = `rgba(111,214,198,${((1 - pulse) * .8).toFixed(3)})`; x.beginPath(); x.arc(bx + 14, ny, 5 + pulse * 26, 0, 7); x.stroke(); x.fillStyle = '#6fd6c6'; x.fillRect(bx + 11, ny - 3, 6, 6); const tw = x.measureText(n).width; x.fillStyle = 'rgba(2,9,12,.8)'; x.fillRect(bx + 26, ny - 11, tw + 14, 22); x.fillStyle = '#f4f2ec'; x.fillText(n, bx + 33, ny); });
       }
     }
   };
@@ -709,7 +710,8 @@ if (OPEN) {
 const backIntro = () => { const l = $('#top .bdi-lede'); if (l && !$('.bk', l)) l.insertAdjacentHTML('afterbegin', BACKED.replace('class="bk"', 'class="bk bdi-bk"')); return !!l; };
 if (!backIntro() && $('#top')) { const mo = new MutationObserver(() => { if (backIntro()) mo.disconnect(); }); mo.observe($('#top'), { childList: true, subtree: true }); }
 addEventListener('hashchange', route);
-matchMedia('(max-width: 860px)').addEventListener('change', () => { if (HOME && cur < 0 && HOME.mode !== (narrow() ? 'pk' : 'ride')) { if (rideOff) { rideOff(); rideOff = null; } goHome(); } });
+const reHome = () => { if (HOME && cur < 0 && HOME.mode !== (narrow() ? 'pk' : 'ride')) { if (rideOff) { rideOff(); rideOff = null; } goHome(); } };
+matchMedia('(max-width: 860px)').addEventListener('change', reHome); matchMedia('(max-height: 520px) and (orientation: landscape)').addEventListener('change', reHome);
 addEventListener('keydown', (e) => {
   if (cur < 0 || e.metaKey || e.ctrlKey || e.altKey || (e.target.closest && e.target.closest('input,select,textarea,summary'))) return;
   if (e.key === 'ArrowRight') location.hash = (STOPS[cur + 1] || { id: 'map' }).id;
