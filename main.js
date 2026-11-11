@@ -51,7 +51,7 @@ function machine(id, l, c, over, scene, exp, dep) {
 }
 
 const BAYPIC = `<figure class="pic bay" role="img" aria-label="Contour map of the Chesapeake Bay from NOAA depth data with an illustrative low-oxygen area in the middle of the Bay"><div class="baysvg"></div><figcaption>${tag('Illustration')}</figcaption></figure>`;
-const WHEEL = `<figure class="pano"><div class="stage">${photo('mtw', TW.photo.alt)}<span class="eye l" aria-hidden="true"><b></b></span><span class="eye r" aria-hidden="true"><b></b></span></div><figcaption>Mr. Trash Wheel, Inner Harbor. <a href="${TW.photo.href}" target="_blank" rel="noopener">Photo: Matthew Bellemare, CC BY-SA 2.0<span class="vh"> (opens Wikimedia Commons)</span>.</a> Cropped, converted to black and white, moving eyes added on this site.</figcaption></figure>`;
+const WHEEL = `<figure class="pano"><div class="stage">${photo('mtw', TW.photo.alt)}<span class="eye l" aria-hidden="true"><b></b></span><span class="eye r" aria-hidden="true"><b></b></span></div><a class="pano-link" href="https://www.mrtrashwheel.com/" target="_blank" rel="noopener" title="Visit mrtrashwheel.com" aria-label="Mr. Trash Wheel's website (opens in a new tab)"></a><figcaption>Mr. Trash Wheel, Inner Harbor. <a href="${TW.photo.href}" target="_blank" rel="noopener">Photo: Matthew Bellemare, CC BY-SA 2.0<span class="vh"> (opens Wikimedia Commons)</span>.</a> Cropped, converted to black and white, moving eyes added on this site.</figcaption></figure>`;
 
 const BACKERS = [
   { name: 'Northrop Grumman', href: 'https://www.northropgrumman.com/', src: 'shared/logos/northrop-grumman.svg', w: 1010, h: 231, cls: 'ng' },
@@ -61,7 +61,7 @@ const BACKED = `<div class="bk"><span>Backed by</span>${BACKERS.map((b) => `<a c
 const BACKEDX = BACKED;
 const STOPS = [
   { id: 'wheel', l: 'w', name: 'Mr. Trash Wheel', place: ch[0].place, line: ch[0].title, tabs: [
-    { t: 'Overview', left: sub(ch[0].body) + fine('Mr. Trash Wheel backs our work.'), right: WHEEL },
+    { t: 'Overview', left: sub(ch[0].body) + fine(`Mr. Trash Wheel backs our work. ${ext('https://www.mrtrashwheel.com/', 'mrtrashwheel.com')}`), right: WHEEL },
     { t: 'How it works', h: 'The river does the work.', left: `<ol class="steps">${['Floating booms steer what comes down the Jones Falls toward the wheel.', 'The river\'s current turns a 14-foot water wheel. When the current is slow, solar panels run pumps that keep it turning.', 'The wheel drives a rake and a conveyor that lift trash out of the water.', 'The trash drops into a dumpster on its own barge, which is towed away when it is full.'].map(li).join('')}</ol>${fine(`Source: ${ext(MTW, 'mrtrashwheel.com')}`)}`, right: pic(cut('trashWheel-3q', 1329, 969, 'Line drawing of Mr. Trash Wheel from the front quarter'), 'Illustration') },
     { t: 'Who runs it', h: 'On the water since 2014.', left: `<ul class="rows">${row('Installed', 'May 2014, at the mouth of the Jones Falls')}${row('Invented by', 'John Kellett')}${row('Commissioned by', 'Waterfront Partnership of Baltimore')}${row('Operated by', 'Clearwater Mills')}</ul>${fine(`We're partnering with Mr. Trash Wheel to help give them their radar and sensors. We did not build the wheel and we do not run it. Source: ${ext(MTW, 'mrtrashwheel.com')}`)}`, right: pic(cut('trashWheel-front', 891, 1027, 'Line drawing of Mr. Trash Wheel from the front'), 'Illustration') },
   ] },

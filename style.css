@@ -137,6 +137,9 @@ html.qa .pic img{animation:none!important}
 .eye b::after{content:"";position:absolute;left:24%;top:18%;width:20%;aspect-ratio:1;border-radius:50%;background:#fff;opacity:.72}
 .pano figcaption{position:absolute;left:0;bottom:0;right:0;font-size:12.5px;line-height:1.3;padding:7px 10px;background:rgba(0,0,0,.72)}
 .pano figcaption a{display:inline-block;padding:8px 0;margin:-8px 0}
+/* The photo of Mr. Trash Wheel opens its website; the caption and its credit link stay on top */
+.pano-link{position:absolute;inset:0;z-index:2}.pano figcaption{z-index:3}.pano .eye{pointer-events:none}
+.pano-link:focus-visible{outline:3px solid var(--r);outline-offset:-3px}
 .baysvg,.baysvg svg{position:absolute;inset:0;width:100%;height:100%}
 .baysvg svg{overflow:visible}
 .baysvg .shore{stroke:rgba(244,242,236,.82);stroke-width:.7}

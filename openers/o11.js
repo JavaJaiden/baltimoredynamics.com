@@ -16,12 +16,13 @@
       <div class="o11-copy"><p class="o11-eye">Mr. Trash Wheel, Inner Harbor</p><h1>We started on the water.</h1><p class="o11-sub">We're partnering with Mr. Trash Wheel to help give them their radar and sensors.</p></div>
       <div class="o11-lede">${O.BACKED}<p class="o11-note"><span class="o11-cue">Scroll</span></p></div>
       <span class="o11-phonecue"><span class="o11-cue">Scroll</span></span>
+      <a class="o11-link" href="https://www.mrtrashwheel.com/" target="_blank" rel="noopener" title="Visit mrtrashwheel.com" aria-label="Mr. Trash Wheel's website (opens in a new tab)"></a>
       </div>
     </div></div>
     <i class="o11-beam" aria-hidden="true"></i>
   </div><i class="o11-edge" aria-hidden="true"></i>`;
   document.body.insertBefore(sec, document.getElementById('top'));
-  const $ = (s) => sec.querySelector(s), pin = $('.op-pin'), fit = $('.o11-fit'), wipe = $('.o11-wipe'), stage = $('.o11-stage'), cv = $('.o11-sky'), wheel = $('.o11-wheel'), photo = $('.o11-photo'), beam = $('.o11-beam'), edge = $('.o11-edge'), lede = $('.o11-lede'), copy = $('.o11-copy'), cues = [...sec.querySelectorAll('.o11-cue')];
+  const $ = (s) => sec.querySelector(s), pin = $('.op-pin'), fit = $('.o11-fit'), wipe = $('.o11-wipe'), stage = $('.o11-stage'), cv = $('.o11-sky'), wheel = $('.o11-wheel'), photo = $('.o11-photo'), beam = $('.o11-beam'), edge = $('.o11-edge'), link = $('.o11-link'), lede = $('.o11-lede'), copy = $('.o11-copy'), cues = [...sec.querySelectorAll('.o11-cue')];
   const still = () => O.reduced || html.classList.contains('bdi-static'), off = () => html.classList.contains('bdi-off');
   /* With this opener on top, its heading leads the page and the intro's becomes the second */
   const ih = document.querySelector('#top .bdi-hl'); if (ih) { ih.setAttribute('role', 'heading'); ih.setAttribute('aria-level', '2'); }
@@ -90,6 +91,7 @@
     has = 1;
   }
 
+  let ilink = null;
   let fade = 0, shownAt = 0, W = 0, H = 0, PH = 0, s = 1, x0 = 0, y0 = 0, hor = 0, rf = 300, D = 1, lead = 1, t = 0, T = 0, last = performance.now(), raf = 0, hold = 0;
   function layout() {
     if (off()) return;
@@ -99,6 +101,8 @@
     sec.dataset.stack = L.stack ? 1 : 0;
     sec.style.setProperty('--hor', hor + 'px');
     wheel.style.width = 760 * s + 'px'; wheel.style.height = 520 * s + 'px';
+    /* The wheel is a link to its own website: over the photo here, and over the animated wheel in the intro for as long as the camera holds it in the same place */
+    [link, ilink].forEach((a) => { if (a) a.style.cssText = `left:${x0}px;top:${y0}px;width:${760 * s}px;height:${520 * s}px`; });
     lead = Math.max(1, sec.offsetHeight - PH);
     const pr = pin.getBoundingClientRect(), r = lede.getBoundingClientRect();
     sec.style.setProperty('--bk-top', (r.top - pr.top) + 'px');
@@ -139,6 +143,10 @@
   }
   const wake = () => { if (!raf && !off()) { last = performance.now() - 16; raf = requestAnimationFrame(frame); } };
   addEventListener('scroll', wake, { passive: true });
+  const ipin = document.querySelector('#top .bdi-descent__pin'), itrack = document.querySelector('#top .bdi-descent');
+  if (ipin && itrack && !O.reduced) { ipin.insertAdjacentHTML('beforeend', `<a class="o11-link o11-link2" href="https://www.mrtrashwheel.com/" target="_blank" rel="noopener" title="Visit mrtrashwheel.com" aria-label="Mr. Trash Wheel's website (opens in a new tab)"></a>`); ilink = ipin.lastElementChild; }
+  let lraf = 0; const linkSync = () => { lraf = 0; if (!ilink) return; const span = itrack.offsetHeight - lead - innerHeight, p = span > 0 ? ((window.scrollY || 0) - lead) / span : 1; ilink.hidden = still() || off() || p > 0.18; };
+  addEventListener('scroll', () => { if (!lraf) lraf = requestAnimationFrame(linkSync); }, { passive: true });
   document.addEventListener('visibilitychange', wake);
   addEventListener('resize', () => { layout(); wake(); }, { passive: true });
   addEventListener('hashchange', () => setTimeout(() => { if (off()) { chrome(false); cover(false); } else { layout(); wake(); } }, 0));
@@ -150,7 +158,7 @@
 
   if (!initGL()) sec.classList.add('no-gl');
   cv.addEventListener('webglcontextlost', (e) => { e.preventDefault(); gl = null; sec.classList.add('no-gl'); });
-  layout(); t = rawT(); apply(performance.now()); wake();
+  layout(); t = rawT(); apply(performance.now()); wake(); linkSync();
   if (off()) chrome(false);
   const shown = () => { if (shownAt) return; upload(); shownAt = performance.now(); sec.classList.add('o11-in'); html.classList.add('o11-up'); apply(shownAt); wake(); };
   const decoded = photo.decode ? photo.decode() : Promise.resolve();
