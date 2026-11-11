@@ -371,7 +371,7 @@ function makeRide(n) {
       layout(); setTimeout(prebuild, 900);
     },
     off() { live = false; removeEventListener('scroll', onScroll); ro.disconnect(); io.disconnect(); cancelAnimationFrame(raf); raf = 0; },
-    jump(id) { const el = document.getElementById('rd-' + id); if (!el) return false; el.classList.add('seen'); scrollTo(0, el.getBoundingClientRect().top + scrollY - hd.offsetHeight); return true; },
+    jump(id, slide) { const el = document.getElementById('rd-' + id); if (!el) return false; el.classList.add('seen'); scrollTo({ top: el.getBoundingClientRect().top + scrollY - hd.offsetHeight, behavior: slide && !reduced ? 'smooth' : 'auto' }); if (slide) { el.tabIndex = -1; el.focus({ preventScroll: true }); } return true; },
     inRide() { return ride.getBoundingClientRect().top < innerHeight * .5; },
     destroy() { this.off(); Object.values(FX).forEach((f) => f && f.gone && f.gone()); },
   };
@@ -660,6 +660,12 @@ function route() {
   if (h === 'intro') scrollTo(0, 0);
   if (h === 'after-intro') { const a = document.getElementById('after-intro'); if (a) a.scrollIntoView(); }
 }
+/* On the home page a station (on the map, or a dot in the header) slides you down the line to that stop. Its own page opens from "More on ..." there. */
+document.addEventListener('click', (e) => {
+  if (cur >= 0 || !HOME || HOME.mode !== 'ride' || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const a = e.target.closest && e.target.closest('.mp .st, .lst a, .hd .rs'); if (!a) return;
+  if (HOME.r.jump((a.getAttribute('href') || '').replace('#', ''), true)) e.preventDefault();
+});
 /* "Map" links when you are already on the map go back to the top of it. */
 document.addEventListener('click', (e) => {
   const a = e.target.closest && e.target.closest('a[href="#map"]');
