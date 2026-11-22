@@ -104,11 +104,6 @@ BD.content = {
     gatesTitle: "The next three gates.",
     gates: [["Gate 1", "Measure", "Build the physical force-reference fixture and put real numbers on hose, nozzle and traction forces. Replace every assumed value with a measured one."], ["Gate 2", "Integrate", "Sealed harness, independent power cutoff, protected electrical interfaces, rated recovery hardware, and a host aircraft with measured mass and center of gravity."], ["Gate 3", "Prove", "Run trials on real customer jobs and count cost per accepted job, including failed runs, recovery attempts and rework."]] },
   people: { kicker: "People", title: "The crew.",
-    lead: { name: "Tyler “Duck” Duckett", role: "RF Engineer", photo: { src: "tyler", alt: "Portrait of Tyler Duckett in Marine Corps dress blues" },
-      paras: ["Five years as a Marine Corps radar technician, keeping an S-band AESA radar on the air across the Pacific. Now building the radio links our machines depend on.",
-        "Tyler leads antenna and RF work on a 440 MHz balloon payload at the University of Maryland while studying electrical engineering. Every sortie and every rover run needs a link that holds. That link is Tyler's job.",
-        "On the radar, the job was fault isolation across transmit and receive modules, prime power, liquid cooling and signal processing, then alignment and calibration after every site move: transmit power, receiver sensitivity and timing, back to specification."],
-      easter: { src: "duck", alt: "A mallard standing on a wooden dock in Baltimore Harbor", cap: "Baltimore Harbor, June 2023. No relation." } },
     crew: [
       { name: "Mike Kardas", role: "Principal Investigator", photo: { src: "mike", alt: "Portrait of Mike Kardas" }, body: "Systems engineering manager for more than 30 years at Northrop Grumman. Mike ran the student lab as principal investigator and put the work on the water." },
       { name: "Sophia Roberts-Weigert", role: "Mentor, Boat", photo: { src: "sophia", alt: "Portrait of Sophia Roberts-Weigert" }, body: "Mechanical engineer with a research background in mechatronics and robotics, working across SolidWorks, MATLAB, Arduino, Python and C++. Sophia led the boat work this company grew from." },
