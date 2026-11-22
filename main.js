@@ -11,7 +11,7 @@ const dwell = (id, via) => { if (!window.posthog) return; clearTimeout(phT); phT
 const PLAIN = document.getElementById('text') ? '<p class="plain"><a href="#text">Read the whole site on one plain page</a></p>' : '';
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const sys = (id) => C.systems.items.find((m) => m.id === id);
-const IMG = { tyler: [720, 912], dom: [522, 800], sophia: [800, 800], eyobed: [800, 800], mike: [200, 200], duck: [700, 934], dinghy: [747, 420], yacht: [470, 420], jar: [1100, 1754], bench: [1600, 1204], sensor: [1600, 2126], flagwall: [560, 420], nightdesk: [560, 420], aesv: [1200, 1706], mtw: [1600, 1066] };
+const IMG = { tyler: [720, 912], dom: [522, 800], sophia: [800, 800], eyobed: [800, 800], mike: [200, 200], dinghy: [747, 420], yacht: [470, 420], jar: [1100, 1754], bench: [1600, 1204], sensor: [1600, 2126], flagwall: [560, 420], nightdesk: [560, 420], aesv: [1200, 1706], mtw: [1600, 1066] };
 const TAGS = { Designed: 'des', Simulated: 'sim', Calculated: 'cal', Target: 'tar', 'Software tested': 'sof', Next: 'nxt', 'Design rule': 'rul', Illustration: 'ill' };
 const tag = (t) => `<span class="tag t-${TAGS[t] || 'rul'}">${t}</span>`;
 const photo = (n, alt, cls = '') => `<img class="${cls}" src="${BD.img(n)}" width="${IMG[n][0]}" height="${IMG[n][1]}" alt="${alt}" loading="lazy">`;
@@ -140,7 +140,7 @@ function mapSVG() {
 const LIST = () => `<ol class="lst">${STOPS.map((s, i) => `<li class="l-${s.l}"><a href="#${s.id}"><i>${num(i)}</i><b>${s.name}</b><span aria-hidden="true">→</span></a></li>`).join('')}</ol>`;
 
 /* ---------- the ride: the line drawn down the home page, one screen per stop ---------- */
-const PEOPLE = [{ ...PE.lead, name: 'Tyler “Duck” Duckett' }, ...PE.crew];
+const PEOPLE = [PE.lead, ...PE.crew];
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const smooth = (a, b, v) => { const t = clamp01((v - a) / (b - a)); return t * t * (3 - 2 * t); };
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -529,12 +529,11 @@ const rail = (cur) => `<nav class="rail" aria-label="All stops">${STOPS.map((s, 
 const fresh = (el) => { el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
 function crewSecs() {
   const L = PE.lead, all = [{ ...L }, ...PE.crew.map((p) => ({ ...p, paras: [p.body] }))];
-  const face = (p, lead) => `<figure class="portrait${p.photo.src === 'mike' ? ' low' : ''}">${photo(p.photo.src, p.photo.alt)}${lead ? photo(L.easter.src, L.easter.alt, 'duckimg') + `<figcaption>${L.easter.cap}</figcaption>` : ''}</figure>`;
+  const face = (p) => `<figure class="portrait${p.photo.src === 'mike' ? ' low' : ''}">${photo(p.photo.src, p.photo.alt)}</figure>`;
   return [
     { t: 'Everyone', left: `<ul class="roster">${all.map((p, k) => `<li><button type="button" data-sec="${k + 1}">${thumb(p.photo.src, '')}<b>${p.name}</b><span>${p.role}</span></button></li>`).join('')}</ul>`, right: pic(photo('yacht', C.log.photos[1].alt), '', C.log.photos[1].cap) },
-    ...all.map((p, k) => ({ t: p.name.split(' ')[0], h: k ? p.name : 'Tyler <button type="button" class="duck" aria-pressed="false" aria-label="Duck">“Duck”</button> Duckett',
-      left: `<p class="lab">${p.role}</p>${sub(p.paras[0])}${p.paras.slice(1).map((x) => `<p class="note">${x}</p>`).join('')}`, right: face(p, !k),
-      after: k ? null : (v, b) => { const d = $('.duck', b.parentNode); if (d) d.addEventListener('click', () => { const on = $('.portrait', v).classList.toggle('is-duck'); d.setAttribute('aria-pressed', String(on)); }); } })),
+    ...all.map((p, k) => ({ t: p.name.split(' ')[0], h: p.name,
+      left: `<p class="lab">${p.role}</p>${sub(p.paras[0])}${p.paras.slice(1).map((x) => `<p class="note">${x}</p>`).join('')}`, right: face(p) })),
   ];
 }
 const logSecs = () => [{ t: 'Photos', left: sub('Real photographs from the boat, the Bay and the lab.'), right: `<div class="shots">${C.log.photos.map((p, k) => `<figure id="ph-${k}">${photo(p.src, p.alt)}<figcaption>${p.cap}</figcaption></figure>`).join('')}</div>`, cls: 'full' }];
